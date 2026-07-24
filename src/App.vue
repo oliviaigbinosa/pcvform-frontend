@@ -10,7 +10,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import Sidebar from './components/sidebar.vue'
+import Sidebar from '../components/sidebar.vue'
 import { fetchVouchers } from './stores/appState'
 
 onMounted(async () => {

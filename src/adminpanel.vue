@@ -498,7 +498,7 @@
 
 <script setup>
 import { reactive, computed, ref, onMounted, onBeforeUnmount } from 'vue'
-import FilePreview from './components/FilePreview.vue'
+import FilePreview from '../components/FilePreview.vue'
 import {
   allVouchers,
   onboardingUsers,
