@@ -166,9 +166,29 @@
 </template>
 
 <script setup>
-
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { allVouchers, isAdmin, logoutUser, userEmail, userRole } from '@/stores/appState'
 
+const route = useRoute()
+const router = useRouter()
+
+const sidebarOpen = ref(true)
+const showLogoutModal = ref(false)
+
+const userInitial = computed(() => (userEmail.value ? userEmail.value.charAt(0).toUpperCase() : ''))
+
+const receivedCount = computed(
+  () => allVouchers.value.filter((voucher) => voucher.to === userEmail.value).length,
+)
+
+function handleLogout() {
+  showLogoutModal.value = true
+}
+
+function confirmLogout() {
+  logoutUser()
+  showLogoutModal.value = false
+  router.push({ name: 'login' })
+}
 </script>

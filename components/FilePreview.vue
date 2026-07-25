@@ -30,8 +30,24 @@
 </template>
 
 <script setup>
-
 import { computed } from 'vue'
 
+const props = defineProps({
+  show: { type: Boolean, default: false },
+  file: { type: Object, default: null },
+})
+
+const emit = defineEmits(['close'])
+
+const isImage = computed(() => props.file?.type?.startsWith('image/'))
+const isPdf = computed(
+  () =>
+    props.file?.type === 'application/pdf' ||
+    props.file?.name?.toLowerCase().endsWith('.pdf'),
+)
+
+function close() {
+  emit('close')
+}
 </script>
 

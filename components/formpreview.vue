@@ -86,8 +86,8 @@
             <div class="preview-row">
               <span>Attached Files</span>
               <span>
-                <template v-if="form.supportingDocs.length">
-                  <span v-for="(file, i) in form.supportingDocs" :key="i">
+                <template v-if="form.supportingDocs?.length">
+                  <span v-for="(file, i) in (form.supportingDocs || [])" :key="i">
                     <a
                      
                       href="#"
@@ -130,6 +130,10 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { API_BASE } from '@/stores/appState'
+import FilePreview from './FilePreview.vue'
+
 const props = defineProps({
   modelValue: {
     type: Boolean,
@@ -155,12 +159,58 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  headers: { 'Content-Type': 'application/json' }
 })
 
-import { computed, ref } from 'vue'
-import { API_BASE } from '@/stores/appState'
-import FilePreview from './FilePreview.vue'
+const emit = defineEmits(['update:modelValue', 'submit'])
 
+const sending = ref(false)
+const showFilePreview = ref(false)
+const previewFile = ref(null)
+
+function closeModal() {
+  emit('update:modelValue', false)
+}
+
+function openFilePreview(file) {
+  previewFile.value = file
+  showFilePreview.value = true
+}
+
+async function sendVoucher() {
+  sending.value = true
+  try {
+    const payload = {
+      voucherNo: props.voucherNo,
+      from: props.form.from,
+      to: props.form.to,
+      cc: props.form.cc || '',
+      subject: props.form.subject,
+      payee: props.form.payee,
+      department: props.form.department,
+      amount: props.parsedAmount,
+      amountWords: props.form.amountWords || '',
+      purpose: props.form.purpose || '',
+      submissionDate: props.form.submissionDate || '',
+      supportingDocs: props.form.supportingDocs || [],
+      submittedBy: props.userEmail || props.form.from,
+    }
+
+    const res = await fetch(`${API_BASE}/api/email/send-voucher`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      throw new Error('Failed to send voucher email')
+    }
+
+    emit('submit')
+  } catch (error) {
+    console.error('Send voucher email failed', error)
+  } finally {
+    sending.value = false
+  }
+}
 </script>
 
