@@ -1814,3 +1814,51 @@ router-link {
   background: #c0392b;
   border-color: #c0392b;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   FILE PREVIEW
+   ═══════════════════════════════════════════════════════════ */
+
+.file-preview-modal {
+  max-width: 900px;
+}
+
+.file-preview-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  overflow: auto;
+}
+
+.file-preview-content {
+  max-width: 100%;
+  max-height: 70vh;
+  display: block;
+}
+
+.file-preview-content--pdf {
+  width: 100%;
+  height: 70vh;
+  border: none;
+}
+
+.file-preview-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.file-preview-fallback__icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.file-preview-fallback__text {
+  color: var(--muted-fg);
+  font-size: 14px;
+  max-width: 320px;
+}
