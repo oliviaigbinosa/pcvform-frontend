@@ -763,14 +763,6 @@ textarea {
   margin-bottom: 6px;
 }
 
-.login-form .input-prefix input::placeholder {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--muted-fg);
-  letter-spacing: 0.12em;
-  opacity: 1;
-}
-
 .login-card__title {
   font-size: 22px;
   font-weight: 700;
@@ -1867,7 +1859,7 @@ router-link {
   height: 30px;
   display: flex;
   align-items: center;
-  color: #fff;
+  color: var(--primary);
   font-size: 14px;
   font-weight: 500;
   max-width: calc(100% - 90px);
