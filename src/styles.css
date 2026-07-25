@@ -792,6 +792,7 @@ textarea {
 .login-form .input-prefix input {
   padding-right: 44px;
   padding-left: 14px; /* override the $ prefix padding */
+  font-family: var(--font-body);
 }
 
 .pwd-toggle {
@@ -1859,9 +1860,10 @@ router-link {
   height: 30px;
   display: flex;
   align-items: center;
-  color: #3b82f6;
+  color: var(--primary);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.45);
   max-width: calc(100% - 90px);
   white-space: nowrap;
   overflow: hidden;
