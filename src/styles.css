@@ -301,7 +301,8 @@ select {
 
 input::placeholder,
 textarea::placeholder {
-  color: color-mix(in srgb, var(--muted-fg) 60%, transparent);
+  color: var(--muted-fg);
+  opacity: 0.6;
 }
 
 input:focus,
@@ -1830,13 +1831,13 @@ router-link {
   position: fixed;
   top: 20px;
   right: 20px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 0;
   border: none;
-  background: #e74c3c;
+  background: #991b1b;
   color: #fff;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
@@ -1848,7 +1849,7 @@ router-link {
 }
 
 .file-preview-close:hover {
-  background: #c0392b;
+  background: #7f1d1d;
 }
 
 .file-preview-stage {
