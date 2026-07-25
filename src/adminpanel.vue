@@ -547,7 +547,7 @@
                   <span class="admin-user-email">{{ user.email }}</span>
                 </div>
               </td>
-              <td class="text-muted">{{ user.addedAt }}</td>
+              <td class="text-muted">{{ formatDate(user.addedAt) }}</td>
               <td class="text-capitalize">{{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '—' }}</td>
               <td class="text-muted">{{ user.department || '—' }}</td>
               <td class="text-center">
@@ -644,6 +644,10 @@ function openFilePreview(doc) {
 
 function formatStatus(status) {
   return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All Statuses'
+}
+
+function formatDate(date) {
+  return date ? new Date(date).toLocaleDateString('en-CA') : '—'
 }
 
 function selectDept(dept) {
