@@ -1,6 +1,7 @@
 <template>
   <div v-if="show" @click.self="close" class="modal-backdrop file-preview-backdrop">
     <button type="button" @click="close" aria-label="Close" class="file-preview-close">✕</button>
+    <div class="file-preview-title">{{ file?.name }}</div>
     <div class="file-preview-stage">
       <img
         v-if="isImage"
