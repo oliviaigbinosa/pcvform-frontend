@@ -1860,7 +1860,7 @@ router-link {
   height: 30px;
   display: flex;
   align-items: center;
-  color: var(--primary);
+  color: #2563eb;
   font-size: 16px;
   font-weight: 700;
   max-width: calc(100% - 90px);
