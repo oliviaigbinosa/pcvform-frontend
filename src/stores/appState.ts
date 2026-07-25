@@ -8,6 +8,21 @@ const isLoggedIn = ref(Boolean(userEmail.value))
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const allVouchers = ref<any[]>([])
 const loadingVouchers = ref(true)
+const lastSeenReceivedCount = ref(0)
+
+const receivedBadgeCount = computed(() =>
+  Math.max(
+    0,
+    allVouchers.value.filter((voucher) => voucher.to === userEmail.value).length -
+      lastSeenReceivedCount.value,
+  ),
+)
+
+function markReceivedAsSeen() {
+  lastSeenReceivedCount.value = allVouchers.value.filter(
+    (voucher) => voucher.to === userEmail.value,
+  ).length
+}
 
 function loginUser(email: string, role = 'user') {
   userEmail.value = email
@@ -144,11 +159,14 @@ export {
   fetchOnboardingUsers,
   fetchVouchers,
   isAdmin,
+  lastSeenReceivedCount,
   loadingVouchers,
   isLoggedIn,
   loginUser,
   logoutUser,
+  markReceivedAsSeen,
   onboardingUsers,
+  receivedBadgeCount,
   removeOnboardingUser,
   sendInviteEmail,
   updateVoucherStatus,

@@ -101,7 +101,7 @@
             <line x1="3" y1="18" x2="3.01" y2="18" />
           </svg>
           Vouchers
-          <span v-if="receivedCount" class="sidebar__badge">{{ receivedCount }}</span>
+          <span v-if="receivedBadgeCount > 0" class="sidebar__badge">{{ receivedBadgeCount }}</span>
         </router-link>
         <router-link
           v-if="isAdmin"
@@ -168,7 +168,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { allVouchers, isAdmin, logoutUser, userEmail, userRole } from '@/stores/appState'
+import { receivedBadgeCount, isAdmin, logoutUser, userEmail, userRole } from '@/stores/appState'
 
 const route = useRoute()
 const router = useRouter()
@@ -178,9 +178,6 @@ const showLogoutModal = ref(false)
 
 const userInitial = computed(() => (userEmail.value ? userEmail.value.charAt(0).toUpperCase() : ''))
 
-const receivedCount = computed(
-  () => allVouchers.value.filter((voucher) => voucher.to === userEmail.value).length,
-)
 
 function handleLogout() {
   showLogoutModal.value = true

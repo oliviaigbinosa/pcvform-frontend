@@ -156,17 +156,15 @@
           @click="activeTab = 'sent'"
         >
           Sent
-          <span v-if="sentVouchers.length" class="dashboard-tabs__badge">{{ sentVouchers.length }}</span>
         </button>
         <button
           role="tab"
           class="dashboard-tabs__tab"
           :class="{ active: activeTab === 'received' }"
           :aria-selected="activeTab === 'received'"
-          @click="activeTab = 'received'"
+          @click="openReceivedTab"
         >
           Received
-          <span v-if="receivedVouchers.length" class="dashboard-tabs__badge">{{ receivedVouchers.length }}</span>
         </button>
       </nav>
 
@@ -271,7 +269,7 @@
 import { computed, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import FilePreview from '../components/FilePreview.vue'
-import { allVouchers, loadingVouchers, userEmail, API_BASE, updateVoucherStatus } from './stores/appState'
+import { allVouchers, loadingVouchers, userEmail, API_BASE, updateVoucherStatus, markReceivedAsSeen } from './stores/appState'
 
 const router = useRouter()
 const selectedVoucher = ref(null)
@@ -289,6 +287,11 @@ function togglePurpose(id) {
 
 function goToForm() {
   router.push({ name: 'form' })
+}
+
+function openReceivedTab() {
+  activeTab.value = 'received'
+  markReceivedAsSeen()
 }
 
 function openVoucher(voucher) {

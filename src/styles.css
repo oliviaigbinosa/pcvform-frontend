@@ -1862,8 +1862,7 @@ router-link {
   align-items: center;
   color: var(--primary);
   font-size: 16px;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.45);
+  font-weight: 700;
   max-width: calc(100% - 90px);
   white-space: nowrap;
   overflow: hidden;
