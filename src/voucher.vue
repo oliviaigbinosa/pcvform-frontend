@@ -162,7 +162,7 @@
           class="dashboard-tabs__tab"
           :class="{ active: activeTab === 'received' }"
           :aria-selected="activeTab === 'received'"
-          @click="openReceivedTab"
+          @click="activeTab = 'received'"
         >
           Received
         </button>
@@ -269,7 +269,7 @@
 import { computed, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import FilePreview from '../components/FilePreview.vue'
-import { allVouchers, loadingVouchers, userEmail, API_BASE, updateVoucherStatus, markReceivedAsSeen } from './stores/appState'
+import { allVouchers, loadingVouchers, userEmail, API_BASE, updateVoucherStatus } from './stores/appState'
 
 const router = useRouter()
 const selectedVoucher = ref(null)
@@ -287,11 +287,6 @@ function togglePurpose(id) {
 
 function goToForm() {
   router.push({ name: 'form' })
-}
-
-function openReceivedTab() {
-  activeTab.value = 'received'
-  markReceivedAsSeen()
 }
 
 function openVoucher(voucher) {

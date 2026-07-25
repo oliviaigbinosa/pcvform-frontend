@@ -101,7 +101,6 @@
             <line x1="3" y1="18" x2="3.01" y2="18" />
           </svg>
           Vouchers
-          <span v-if="receivedBadgeCount > 0" class="sidebar__badge">{{ receivedBadgeCount }}</span>
         </router-link>
         <router-link
           v-if="isAdmin"
@@ -168,7 +167,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { receivedBadgeCount, isAdmin, logoutUser, userEmail, userRole } from '@/stores/appState'
+import { isAdmin, logoutUser, userEmail, userRole } from '@/stores/appState'
 
 const route = useRoute()
 const router = useRouter()

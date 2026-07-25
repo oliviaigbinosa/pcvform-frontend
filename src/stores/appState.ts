@@ -8,53 +8,20 @@ const isLoggedIn = ref(Boolean(userEmail.value))
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const allVouchers = ref<any[]>([])
 const loadingVouchers = ref(true)
-const receivedAtLoadIds = ref<Set<string>>(new Set())
-const receivedAtLoadInitialized = ref(false)
-const seenReceivedIds = ref<Set<string>>(new Set())
 
-const receivedBadgeCount = computed(() =>
-  allVouchers.value.filter(
-    (voucher) =>
-      voucher.to === userEmail.value &&
-      !receivedAtLoadIds.value.has(String(voucher.id)) &&
-      !seenReceivedIds.value.has(String(voucher.id)),
-  ).length,
-)
-
-function markReceivedAsSeen() {
-  seenReceivedIds.value = new Set(
-    allVouchers.value
-      .filter((voucher) => voucher.to === userEmail.value)
-      .map((voucher) => String(voucher.id)),
-  )
-}
-
-async function loginUser(email: string, role = 'user') {
+function loginUser(email: string, role = 'user') {
   userEmail.value = email
   userRole.value = role
   isLoggedIn.value = true
 
   sessionStorage.setItem('pcv_user', email)
   sessionStorage.setItem('pcv_role', role)
-
-  receivedAtLoadIds.value = new Set()
-  receivedAtLoadInitialized.value = false
-  seenReceivedIds.value = new Set()
-
-  try {
-    await fetchVouchers()
-  } catch {
-    // ignore voucher fetch failures during login
-  }
 }
 
 function logoutUser() {
   userEmail.value = ''
   userRole.value = ''
   isLoggedIn.value = false
-  receivedAtLoadIds.value = new Set()
-  receivedAtLoadInitialized.value = false
-  seenReceivedIds.value = new Set()
 
   sessionStorage.removeItem('pcv_user')
   sessionStorage.removeItem('pcv_role')
@@ -68,14 +35,6 @@ async function fetchVouchers() {
       throw new Error('Failed to fetch vouchers')
     }
     allVouchers.value = await res.json()
-    if (!receivedAtLoadInitialized.value) {
-      receivedAtLoadIds.value = new Set(
-        allVouchers.value
-          .filter((voucher) => voucher.to === userEmail.value)
-          .map((voucher) => String(voucher.id)),
-      )
-      receivedAtLoadInitialized.value = true
-    }
   } finally {
     loadingVouchers.value = false
   }
@@ -189,9 +148,7 @@ export {
   isLoggedIn,
   loginUser,
   logoutUser,
-  markReceivedAsSeen,
   onboardingUsers,
-  receivedBadgeCount,
   removeOnboardingUser,
   sendInviteEmail,
   updateVoucherStatus,
