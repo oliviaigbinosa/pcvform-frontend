@@ -6,7 +6,7 @@
         <p class="vouchers-sub">
           {{
             activeTab === 'vouchers'
-              ? 'All submitted vouchers across all users'
+              ? allVouchers.length + ' submitted voucher' + (allVouchers.length !== 1 ? 's' : '') + ' across all users'
               : 'Manage user access and onboarding'
           }}
         </p>
@@ -40,9 +40,6 @@
         @click="activeTab = 'vouchers'"
       >
         All vouchers
-        <span v-if="allVouchers.length" class="dashboard-tabs__badge">{{
-          allVouchers.length
-        }}</span>
       </button>
       <button
         role="tab"
@@ -166,7 +163,11 @@
       </div>
 
       <template v-else>
-        <div class="admin-filters card">
+        <div v-if="loadingVouchers" class="vouchers-loading">
+          Loading vouchers…
+        </div>
+        <template v-else>
+          <div class="admin-filters card">
           <div ref="deptDropdownRef" class="field admin-filter-field custom-select">
             <label class="mono-label">Filter by Department</label>
             <button
@@ -370,6 +371,7 @@
         </div>
 
      
+        </template>
       </template>
     </div>
 
@@ -390,31 +392,100 @@
             />
             <span v-if="onboardErrors.email" class="err-msg">{{ onboardErrors.email }}</span>
           </div>
-          <div class="field onboarding-field">
+          <div ref="onboardDeptDropdownRef" class="field onboarding-field custom-select">
             <label class="mono-label">Department </label>
-            <select
-              v-model="onboardForm.department"
+            <button
+              type="button"
+              class="custom-select__trigger"
               :class="{ error: onboardErrors.department }"
-              @change="delete onboardErrors.department"
+              @click.stop="onboardDeptDropdownOpen = !onboardDeptDropdownOpen"
             >
-              <option value="" disabled>Select department</option>
-              <option v-for="department in adminDepts" :key="department" :value="department">
+              <span class="custom-select__label">{{ onboardForm.department || 'Select department' }}</span>
+              <svg
+                class="custom-select__chevron"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div v-if="onboardDeptDropdownOpen" class="custom-select__options">
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: !onboardForm.department }"
+                @click="selectOnboardDept('')"
+              >
+                Select department
+              </button>
+              <button
+                v-for="department in onboardDepts"
+                :key="department"
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: onboardForm.department === department }"
+                @click="selectOnboardDept(department)"
+              >
                 {{ department }}
-              </option>
-            </select>
+              </button>
+            </div>
             <span v-if="onboardErrors.department" class="err-msg">{{ onboardErrors.department }}</span>
           </div>
-          <div v-if="userRole === 'super admin'" class="field onboarding-field">
+          <div v-if="userRole === 'super admin'" ref="onboardRoleDropdownRef" class="field onboarding-field custom-select">
             <label class="mono-label">Role </label>
-            <select
-              v-model="onboardForm.role"
+            <button
+              type="button"
+              class="custom-select__trigger"
               :class="{ error: onboardErrors.role }"
-              @change="delete onboardErrors.role"
+              @click.stop="onboardRoleDropdownOpen = !onboardRoleDropdownOpen"
             >
-              <option value="" disabled>Select role</option>
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
+              <span class="custom-select__label">{{ onboardForm.role ? onboardForm.role.charAt(0).toUpperCase() + onboardForm.role.slice(1) : 'Select role' }}</span>
+              <svg
+                class="custom-select__chevron"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div v-if="onboardRoleDropdownOpen" class="custom-select__options">
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: !onboardForm.role }"
+                @click="selectOnboardRole('')"
+              >
+                Select role
+              </button>
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: onboardForm.role === 'user' }"
+                @click="selectOnboardRole('user')"
+              >
+                User
+              </button>
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: onboardForm.role === 'admin' }"
+                @click="selectOnboardRole('admin')"
+              >
+                Admin
+              </button>
+            </div>
             <span v-if="onboardErrors.role" class="err-msg">{{ onboardErrors.role }}</span>
           </div>
           <span v-if="onboardErrors.general" class="err-msg">{{ onboardErrors.general }}</span>
@@ -462,6 +533,8 @@
               <th class="text-center">S/N</th>
               <th>User</th>
               <th>Added On</th>
+              <th>Role</th>
+              <th>Department</th>
               <th class="text-center">Status</th>
             </tr>
           </thead>
@@ -475,6 +548,8 @@
                 </div>
               </td>
               <td class="text-muted">{{ user.addedAt }}</td>
+              <td class="text-capitalize">{{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '—' }}</td>
+              <td class="text-muted">{{ user.department || '—' }}</td>
               <td class="text-center">
                 <span
                   class="status-badge"
@@ -501,6 +576,7 @@ import { reactive, computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import FilePreview from '../components/FilePreview.vue'
 import {
   allVouchers,
+  loadingVouchers,
   onboardingUsers,
   addOnboardingUser,
   removeOnboardingUser,
@@ -523,6 +599,10 @@ const statusDropdownOpen = ref(false)
 const deptDropdownRef = ref(null)
 const userDropdownRef = ref(null)
 const statusDropdownRef = ref(null)
+const onboardDeptDropdownOpen = ref(false)
+const onboardRoleDropdownOpen = ref(false)
+const onboardDeptDropdownRef = ref(null)
+const onboardRoleDropdownRef = ref(null)
 
 const expandedPurposes = reactive({})
 
@@ -530,7 +610,7 @@ function togglePurpose(id) {
   expandedPurposes[id] = !expandedPurposes[id]
 }
 
-const onboardForm = reactive({ email: '', department: '', role: 'user' })
+const onboardForm = reactive({ email: '', department: '', role: '' })
 const onboardErrors = reactive({})
 
 onMounted(async () => {
@@ -549,6 +629,7 @@ const adminFilter = reactive({ dept: '', user: '', status: '' })
 const adminDepts = computed(() =>
   [...new Set(allVouchers.value.map((voucher) => voucher.department))].sort(),
 )
+const onboardDepts = ['firstDep', 'secondDep', 'thirdDep', 'fourthDep', 'fifthDep']
 const adminUsers = computed(() =>
   [...new Set(allVouchers.value.map((voucher) => voucher.submittedBy))].sort(),
 )
@@ -580,6 +661,18 @@ function selectStatus(status) {
   statusDropdownOpen.value = false
 }
 
+function selectOnboardDept(dept) {
+  onboardForm.department = dept
+  delete onboardErrors.department
+  onboardDeptDropdownOpen.value = false
+}
+
+function selectOnboardRole(role) {
+  onboardForm.role = role
+  delete onboardErrors.role
+  onboardRoleDropdownOpen.value = false
+}
+
 function closeDropdowns(event) {
   if (deptDropdownRef.value && !deptDropdownRef.value.contains(event.target)) {
     deptDropdownOpen.value = false
@@ -589,6 +682,12 @@ function closeDropdowns(event) {
   }
   if (statusDropdownRef.value && !statusDropdownRef.value.contains(event.target)) {
     statusDropdownOpen.value = false
+  }
+  if (onboardDeptDropdownRef.value && !onboardDeptDropdownRef.value.contains(event.target)) {
+    onboardDeptDropdownOpen.value = false
+  }
+  if (onboardRoleDropdownRef.value && !onboardRoleDropdownRef.value.contains(event.target)) {
+    onboardRoleDropdownOpen.value = false
   }
 }
 
@@ -662,7 +761,7 @@ async function handleAddUser() {
     await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, onboardForm.role)
     onboardForm.email = ''
     onboardForm.department = ''
-    onboardForm.role = 'user'
+    onboardForm.role = ''
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to add user'
     if (message.includes('already been added')) {
@@ -727,5 +826,51 @@ async function handleRemoveUser(id) {
 .admin-all-vouchers .vouchers-table th:nth-child(3),
 .admin-all-vouchers .vouchers-table td:nth-child(3) {
   text-align: center;
+}
+
+.onboarding-field {
+  min-width: 160px;
+}
+
+.onboarding-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 10px 38px 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--input-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a7265' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--fg);
+  cursor: pointer;
+  outline: none;
+}
+
+.onboarding-field select:focus {
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.onboarding-field select.error {
+  border-color: color-mix(in srgb, var(--destructive) 60%, transparent);
+}
+
+.custom-select__trigger.error {
+  border-color: color-mix(in srgb, var(--destructive) 60%, transparent);
+}
+
+.vouchers-loading {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+  color: #000;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
 }
 </style>

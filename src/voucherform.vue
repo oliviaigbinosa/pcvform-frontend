@@ -615,10 +615,10 @@ async function submitVoucher() {
     })),
   }
 
-  await addVoucher(entry)
   lastVoucherNo.value = voucherNo.value
   showPreview.value = false
   submitted.value = true
+  await addVoucher(entry)
 }
 
 function resetForm() {
