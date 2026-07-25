@@ -29,13 +29,23 @@ function markReceivedAsSeen() {
   )
 }
 
-function loginUser(email: string, role = 'user') {
+async function loginUser(email: string, role = 'user') {
   userEmail.value = email
   userRole.value = role
   isLoggedIn.value = true
 
   sessionStorage.setItem('pcv_user', email)
   sessionStorage.setItem('pcv_role', role)
+
+  receivedAtLoadIds.value = new Set()
+  receivedAtLoadInitialized.value = false
+  seenReceivedIds.value = new Set()
+
+  try {
+    await fetchVouchers()
+  } catch {
+    // ignore voucher fetch failures during login
+  }
 }
 
 function logoutUser() {
