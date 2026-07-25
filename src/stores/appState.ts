@@ -8,20 +8,25 @@ const isLoggedIn = ref(Boolean(userEmail.value))
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const allVouchers = ref<any[]>([])
 const loadingVouchers = ref(true)
-const lastSeenReceivedCount = ref(0)
+const receivedAtLoadIds = ref<Set<string>>(new Set())
+const receivedAtLoadInitialized = ref(false)
+const seenReceivedIds = ref<Set<string>>(new Set())
 
 const receivedBadgeCount = computed(() =>
-  Math.max(
-    0,
-    allVouchers.value.filter((voucher) => voucher.to === userEmail.value).length -
-      lastSeenReceivedCount.value,
-  ),
+  allVouchers.value.filter(
+    (voucher) =>
+      voucher.to === userEmail.value &&
+      !receivedAtLoadIds.value.has(String(voucher.id)) &&
+      !seenReceivedIds.value.has(String(voucher.id)),
+  ).length,
 )
 
 function markReceivedAsSeen() {
-  lastSeenReceivedCount.value = allVouchers.value.filter(
-    (voucher) => voucher.to === userEmail.value,
-  ).length
+  seenReceivedIds.value = new Set(
+    allVouchers.value
+      .filter((voucher) => voucher.to === userEmail.value)
+      .map((voucher) => String(voucher.id)),
+  )
 }
 
 function loginUser(email: string, role = 'user') {
@@ -37,6 +42,9 @@ function logoutUser() {
   userEmail.value = ''
   userRole.value = ''
   isLoggedIn.value = false
+  receivedAtLoadIds.value = new Set()
+  receivedAtLoadInitialized.value = false
+  seenReceivedIds.value = new Set()
 
   sessionStorage.removeItem('pcv_user')
   sessionStorage.removeItem('pcv_role')
@@ -50,6 +58,14 @@ async function fetchVouchers() {
       throw new Error('Failed to fetch vouchers')
     }
     allVouchers.value = await res.json()
+    if (!receivedAtLoadInitialized.value) {
+      receivedAtLoadIds.value = new Set(
+        allVouchers.value
+          .filter((voucher) => voucher.to === userEmail.value)
+          .map((voucher) => String(voucher.id)),
+      )
+      receivedAtLoadInitialized.value = true
+    }
   } finally {
     loadingVouchers.value = false
   }
@@ -159,7 +175,6 @@ export {
   fetchOnboardingUsers,
   fetchVouchers,
   isAdmin,
-  lastSeenReceivedCount,
   loadingVouchers,
   isLoggedIn,
   loginUser,
