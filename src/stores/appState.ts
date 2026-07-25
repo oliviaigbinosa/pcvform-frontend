@@ -99,7 +99,7 @@ async function addOnboardingUser(email: string, password: string, createdBy?: st
   if (!res.ok) {
     throw new Error(data.error || 'Failed to add user')
   }
-  onboardingUsers.value = [...onboardingUsers.value, data]
+  onboardingUsers.value = [data, ...onboardingUsers.value]
 }
 
 async function removeOnboardingUser(id: string) {
