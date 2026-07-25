@@ -169,4 +169,6 @@
 
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { allVouchers, isAdmin, logoutUser, userEmail, userRole } from './stores/appState'
+import { allVouchers, isAdmin, logoutUser, userEmail, userRole } from '@/stores/appState'
+
+</script>

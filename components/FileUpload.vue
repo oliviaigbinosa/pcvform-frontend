@@ -104,3 +104,5 @@ function removeFile(i) {
   emit('update:files', next)
 }
 
+</script>
+

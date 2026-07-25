@@ -159,6 +159,8 @@ const props = defineProps({
 })
 
 import { computed, ref } from 'vue'
-import { API_BASE } from './stores/appState'
+import { API_BASE } from '@/stores/appState'
 import FilePreview from './FilePreview.vue'
+
+</script>
 

@@ -107,3 +107,5 @@ function handleChange(e) {
   emit('change', e)
 }
 
+</script>
+
