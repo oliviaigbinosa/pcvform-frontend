@@ -99,7 +99,9 @@ async function addOnboardingUser(email: string, password: string, createdBy?: st
   if (!res.ok) {
     throw new Error(data.error || 'Failed to add user')
   }
-  onboardingUsers.value = [...onboardingUsers.value, data]
+  onboardingUsers.value = [...onboardingUsers.value, data].sort(
+    (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+  )
 }
 
 async function removeOnboardingUser(id: string) {
