@@ -37,7 +37,7 @@
         </div>
         <div class="pcv-header__right">
           <p class="mono-label">Voucher No.</p>
-          <code class="voucher-no">{{ voucherNo }}</code>
+          <code class="voucher-no">{{ voucherNoDisplay }}</code>
         </div>
       </header>
 
@@ -309,7 +309,7 @@
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
-        <button v-else class="btn btn-primary" @click="openPreview">
+        <button v-else class="btn btn-primary" :disabled="loadingVouchers" @click="openPreview">
           <svg
             width="15"
             height="15"
@@ -350,7 +350,7 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, onboardingUsers, fetchOnboardingUsers, allVouchers } from './stores/appState'
+import { addVoucher, userEmail, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from './stores/appState'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEPS = ['Email Details', 'Payee Info', 'Amount & Purpose', 'Documents & Review']
@@ -499,16 +499,11 @@ function todayStr() {
   const d = new Date()
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
-function makeSerial() {
-  const nextId = allVouchers.value.length + 1
-  return String(nextId).padStart(3, '0')
-}
 function isEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 }
 
 const router = useRouter()
-const voucherSerial = computed(() => makeSerial())
 const step = ref(0)
 const showPreview = ref(false)
 const submitted = ref(false)
@@ -548,9 +543,20 @@ const form = reactive({
 const errors = reactive({})
 
 const deptSlug = computed(() => form.department.trim().toUpperCase().replace(/\s+/g, '-') || 'DEPT')
-const voucherNo = computed(
-  () => `PCV/${deptSlug.value}/${currentYear()}/${currentMonth()}/${voucherSerial.value}`,
-)
+const voucherNo = computed(() => {
+  const prefix = `PCV/${deptSlug.value}/${currentYear()}/${currentMonth()}`
+  const used = allVouchers.value
+    .filter((v) => v.id?.startsWith(`${prefix}/`))
+    .map((v) => {
+      const serial = v.id.split('/').pop() || '0'
+      const n = parseInt(serial, 10)
+      return isNaN(n) ? 0 : n
+    })
+  const max = used.length ? Math.max(...used) : 0
+  return `${prefix}/${String(max + 1).padStart(3, '0')}`
+})
+
+const voucherNoDisplay = computed(() => (loadingVouchers.value ? '—' : voucherNo.value))
 const parsedAmount = computed(() => parseFloat(form.amountFigures) || 0)
 const formattedAmount = computed(() => formatNumberWithCommas(parsedAmount.value))
 const displayAmount = computed({
