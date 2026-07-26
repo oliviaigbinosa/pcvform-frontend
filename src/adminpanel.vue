@@ -704,6 +704,7 @@ const filteredAdminVouchers = computed(() => {
     .reverse()
     .filter(
       (voucher) =>
+        voucher.submittedBy !== userEmail.value &&
         (!adminFilter.dept || voucher.department === adminFilter.dept) &&
         (!adminFilter.user || voucher.submittedBy === adminFilter.user) &&
         (!adminFilter.status ||
