@@ -100,7 +100,7 @@ async function addOnboardingUser(email: string, password: string, createdBy?: st
     throw new Error(data.error || 'Failed to add user')
   }
   onboardingUsers.value = [...onboardingUsers.value, data].sort(
-    (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+    (a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime(),
   )
 }
 
