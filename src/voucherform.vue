@@ -91,22 +91,56 @@
               placeholder="your-name@getpayedmail.com"
               readonly
             />
-            <FormField
-              v-model="form.to"
-              label="To (Recipient Email)"
-              type="select"
-              :options="onboardingUsers"
-              option-value="email"
-              option-label="email"
-              placeholder="Select recipient"
-              :error="errors.to"
-              @change="clearErr('to')"
-            />
+            <div ref="toDropdownRef" class="field custom-select">
+              <label class="mono-label">To (Recipient Email)</label>
+              <button
+                type="button"
+                class="custom-select__trigger"
+                :class="{ error: errors.to }"
+                @click.stop="toDropdownOpen = !toDropdownOpen"
+              >
+                <span class="custom-select__label">{{ form.to || 'Select recipient' }}</span>
+                <svg
+                  class="custom-select__chevron"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div v-if="toDropdownOpen" class="custom-select__options">
+                <button
+                  type="button"
+                  class="custom-select__option"
+                  :class="{ selected: form.to === '' }"
+                  @click="selectTo('')"
+                >
+                  Select recipient
+                </button>
+                <button
+                  v-for="user in onboardingUsers"
+                  :key="user.email"
+                  type="button"
+                  class="custom-select__option"
+                  :class="{ selected: form.to === user.email }"
+                  @click="selectTo(user.email)"
+                >
+                  {{ user.email }}
+                </button>
+              </div>
+              <span v-if="errors.to" class="err-msg">{{ errors.to }}</span>
+            </div>
             <FormField
               v-model="form.cc"
               label="CC (notified on approval)"
               type="email"
-              placeholder="olivia.igbinosa@getpayedmail.com"
+              placeholder="finance@getpayedmail.com"
               readonly
             />
             <FormField
@@ -310,7 +344,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
@@ -481,6 +515,8 @@ const submitted = ref(false)
 const lastVoucherNo = ref('')
 const showFilePreview = ref(false)
 const previewFile = ref(null)
+const toDropdownOpen = ref(false)
+const toDropdownRef = ref(null)
 
 onMounted(async () => {
   try {
@@ -488,12 +524,17 @@ onMounted(async () => {
   } catch {
     // Silently fail - users can still manually enter email if needed
   }
+  window.addEventListener('click', closeToDropdown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', closeToDropdown)
 })
 
 const form = reactive({
   from: userEmail.value,
   to: '',
-  cc: 'olivia.igbinosa@getpayedmail.com',
+  cc: 'finance@getpayedmail.com',
   subject: '',
   payee: '',
   department: '',
@@ -579,6 +620,18 @@ function validate() {
 function clearErr(key) {
   delete errors[key]
 }
+
+function selectTo(email) {
+  form.to = email
+  clearErr('to')
+  toDropdownOpen.value = false
+}
+
+function closeToDropdown(event) {
+  if (toDropdownRef.value && !toDropdownRef.value.contains(event.target)) {
+    toDropdownOpen.value = false
+  }
+}
 function next() {
   if (validate()) step.value = Math.min(step.value + 1, STEPS.length - 1)
 }
@@ -625,7 +678,7 @@ function resetForm() {
   Object.assign(form, {
     from: userEmail.value,
     to: '',
-    cc: 'olivia.igbinosa@getpayedmail.com',
+    cc: 'finance@getpayedmail.com',
     subject: '',
     payee: '',
     department: '',
