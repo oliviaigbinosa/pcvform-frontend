@@ -626,15 +626,19 @@ onMounted(async () => {
 })
 
 const adminFilter = reactive({ dept: '', user: '', status: '' })
+
+const adminBaseVouchers = computed(() =>
+  [...allVouchers.value].reverse().filter((voucher) => voucher.submittedBy !== userEmail.value),
+)
 const adminDepts = computed(() =>
-  [...new Set(allVouchers.value.map((voucher) => voucher.department))].sort(),
+  [...new Set(adminBaseVouchers.value.map((voucher) => voucher.department).filter(Boolean))].sort(),
 )
 const onboardDepts = ['firstDep', 'secondDep', 'thirdDep', 'fourthDep', 'fifthDep']
 const adminUsers = computed(() =>
-  [...new Set(allVouchers.value.map((voucher) => voucher.submittedBy))].sort(),
+  [...new Set(adminBaseVouchers.value.map((voucher) => voucher.submittedBy).filter(Boolean))].sort(),
 )
 const adminStatuses = computed(() =>
-  [...new Set(allVouchers.value.map((voucher) => (voucher.status || 'Pending').toLowerCase()))].sort(),
+  [...new Set(adminBaseVouchers.value.map((voucher) => (voucher.status || 'Pending').toLowerCase()).filter(Boolean))].sort(),
 )
 
 function openFilePreview(doc) {
@@ -700,15 +704,13 @@ onBeforeUnmount(() => {
 })
 
 const filteredAdminVouchers = computed(() => {
-  return [...allVouchers.value]
-    .reverse()
-    .filter(
-      (voucher) =>
-        (!adminFilter.dept || voucher.department === adminFilter.dept) &&
-        (!adminFilter.user || voucher.submittedBy === adminFilter.user) &&
-        (!adminFilter.status ||
-          (voucher.status || 'Pending').toLowerCase() === adminFilter.status),
-    )
+  return adminBaseVouchers.value.filter(
+    (voucher) =>
+      (!adminFilter.dept || voucher.department === adminFilter.dept) &&
+      (!adminFilter.user || voucher.submittedBy === adminFilter.user) &&
+      (!adminFilter.status ||
+        (voucher.status || 'Pending').toLowerCase() === adminFilter.status),
+  )
 })
 
 
