@@ -761,8 +761,8 @@ async function handleAddUser() {
   const password = generateStrongPassword()
   addingUser.value = true
   try {
-    await sendInviteEmail(onboardForm.email, password, userEmail.value)
     await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, onboardForm.role)
+    await sendInviteEmail(onboardForm.email, password, userEmail.value)
     onboardForm.email = ''
     onboardForm.department = ''
     onboardForm.role = ''
