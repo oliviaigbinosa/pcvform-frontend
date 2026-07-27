@@ -1819,13 +1819,13 @@ router-link {
 }
 
 .btn-decline-subtle {
-  background: var(--muted);
+  background: #e3dfd8;
   color: var(--fg);
   border: 1px solid var(--border);
 }
 
 .btn-decline-subtle:hover:not(:disabled) {
-  background: #e3dfd8;
+  background: #d7d2c9;
 }
 
 /* ═══════════════════════════════════════════════════════════
