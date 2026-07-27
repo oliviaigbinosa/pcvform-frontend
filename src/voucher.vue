@@ -17,14 +17,14 @@
       </button>
 
       <template v-if="activeTab === 'received'">
-        <div v-if="selectedVoucher.status === 'Processed' && isSuperAdmin" class="approve-message card success">
-          This voucher form has been processed
-        </div>
-        <div v-else-if="selectedVoucher.status === 'Approved' && !isSuperAdmin" class="approve-message card success">
-          This voucher form has been approved
+        <div v-if="selectedVoucher.status === 'Processed'" class="approve-message card success">
+          This voucher has been processed
         </div>
         <div v-else-if="selectedVoucher.status === 'Declined'" class="approve-message card declined">
-          This voucher form has been declined
+          This voucher has been declined
+        </div>
+        <div v-else-if="selectedVoucher.status === 'Approved' && !isSuperAdmin" class="approve-message card success">
+          This voucher has been approved
         </div>
         <div v-else-if="isSuperAdmin" class="approve-actions-bar">
           <button class="btn btn-approve" :disabled="processing" @click="showProcessModal = true">
