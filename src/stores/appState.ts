@@ -54,9 +54,11 @@ async function addVoucher(entry: Record<string, unknown>) {
 }
 
 async function updateVoucherStatus(id: string, status: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (userEmail.value) headers['x-user-email'] = userEmail.value
   const res = await fetch(`${API_BASE}/api/vouchers/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ status }),
   })
   const data = await res.json()

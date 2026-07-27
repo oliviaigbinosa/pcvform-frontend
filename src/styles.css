@@ -1650,7 +1650,8 @@ textarea {
   border-color: color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
-.status-badge--approved {
+.status-badge--approved,
+.status-badge--processed {
   background: color-mix(in srgb, #16a34a 12%, transparent);
   color: #16a34a;
   border-color: color-mix(in srgb, #16a34a 25%, transparent);

@@ -17,11 +17,20 @@
       </button>
 
       <template v-if="activeTab === 'received'">
-        <div v-if="selectedVoucher.status === 'Approved'" class="approve-message card success">
+        <div v-if="selectedVoucher.status === 'Processed' && isSuperAdmin" class="approve-message card success">
+          This voucher form has been processed
+        </div>
+        <div v-else-if="selectedVoucher.status === 'Approved' && !isSuperAdmin" class="approve-message card success">
           This voucher form has been approved
         </div>
         <div v-else-if="selectedVoucher.status === 'Declined'" class="approve-message card declined">
           This voucher form has been declined
+        </div>
+        <div v-else-if="isSuperAdmin" class="approve-actions-bar">
+          <button class="btn btn-approve" :disabled="processing" @click="showProcessModal = true">
+            {{ processing && processingAction === 'process' ? 'Processing…' : 'Process' }}
+          </button>
+          <button class="btn btn-decline" @click="showDeclineModal = true">Decline</button>
         </div>
         <div v-else class="approve-actions-bar">
           <button class="btn btn-approve" :disabled="processing" @click="showApproveModal = true">
@@ -261,6 +270,24 @@
       </div>
     </div>
 
+    <div v-if="showProcessModal" class="modal-backdrop" @click.self="showProcessModal = false">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Process confirmation" style="max-width: 640px;">
+        <div class="modal-header" style="padding: 8px 24px 4px;">
+          <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">Process voucher?</div>
+          <button class="modal-close" @click="showProcessModal = false" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">Are you sure you want to process this petty cash voucher?<span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">This action cannot be undone.</span></p>
+        </div>
+        <div class="modal-footer" style="border-top: none;">
+          <button class="btn btn-outline" style="border-radius: 9999px;" @click="showProcessModal = false">Cancel</button>
+          <button class="btn btn-approve" :disabled="processing" style="border-radius: 9999px;" @click="confirmProcess">
+            {{ processing && processingAction === 'process' ? 'Processing…' : 'Yes, Process' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <FilePreview :show="showFilePreview" :file="previewFile" @close="showFilePreview = false" />
   </div>
 </template>
@@ -269,7 +296,7 @@
 import { computed, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import FilePreview from '../components/FilePreview.vue'
-import { allVouchers, loadingVouchers, userEmail, API_BASE, updateVoucherStatus } from './stores/appState'
+import { allVouchers, loadingVouchers, userEmail, userRole, API_BASE, updateVoucherStatus } from './stores/appState'
 
 const router = useRouter()
 const selectedVoucher = ref(null)
@@ -277,9 +304,11 @@ const showFilePreview = ref(false)
 const previewFile = ref(null)
 const expandedPurposes = reactive({})
 const processing = ref(false)
+const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const processingAction = ref('')
 const showDeclineModal = ref(false)
 const showApproveModal = ref(false)
+const showProcessModal = ref(false)
 
 function togglePurpose(id) {
   expandedPurposes[id] = !expandedPurposes[id]
@@ -340,6 +369,19 @@ async function confirmApprove() {
   showApproveModal.value = false
 }
 
+async function confirmProcess() {
+  if (processing.value) return
+  processing.value = true
+  processingAction.value = 'process'
+  try {
+    await setDecision('Processed')
+  } finally {
+    processing.value = false
+    processingAction.value = ''
+  }
+  showProcessModal.value = false
+}
+
 async function confirmDecline() {
   if (processing.value) return
   processing.value = true
@@ -364,6 +406,7 @@ const sentVouchers = computed(() =>
 )
 const receivedVouchers = computed(() =>
   allVouchers.value.filter((voucher) => {
+    if (isSuperAdmin.value) return voucher.submittedBy !== userEmail.value
     const email = userEmail.value.toLowerCase()
     return (
       String(voucher.to).toLowerCase() === email ||
