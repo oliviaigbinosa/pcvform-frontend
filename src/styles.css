@@ -1650,17 +1650,22 @@ textarea {
   border-color: color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
-.status-badge--approved,
-.status-badge--processed {
+.status-badge--approved {
   background: color-mix(in srgb, #16a34a 12%, transparent);
   color: #16a34a;
   border-color: color-mix(in srgb, #16a34a 25%, transparent);
 }
 
+.status-badge--processed {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
 .status-badge--declined {
-  background: color-mix(in srgb, #c0392b 12%, transparent);
-  color: #c0392b;
-  border-color: color-mix(in srgb, #c0392b 25%, transparent);
+  background: #e3dfd8;
+  color: var(--fg);
+  border-color: #d7d2c9;
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
@@ -1785,9 +1790,14 @@ router-link {
   color: #1e7e34;
 }
 
+.approve-message.processed {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
 .approve-message.declined {
-  background: #fce8e8;
-  color: #c0392b;
+  background: #e3dfd8;
+  color: var(--fg);
 }
 
 .approve-actions-bar .btn {

@@ -17,7 +17,7 @@
       </button>
 
       <template v-if="activeTab === 'received'">
-        <div v-if="selectedVoucher.status === 'Processed'" class="approve-message card success">
+        <div v-if="selectedVoucher.status === 'Processed'" class="approve-message card processed">
           This voucher has been processed
         </div>
         <div v-else-if="selectedVoucher.status === 'Declined'" class="approve-message card declined">
