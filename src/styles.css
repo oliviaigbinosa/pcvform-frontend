@@ -593,6 +593,15 @@ textarea {
   color: var(--primary);
 }
 
+.modal--process .modal-header {
+  background: #dbeafe;
+  border-bottom-color: #bfdbfe;
+}
+
+.modal--process .modal-header__title {
+  color: #2563eb;
+}
+
 .modal-close {
   width: 32px;
   height: 32px;

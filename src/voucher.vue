@@ -271,7 +271,7 @@
     </div>
 
     <div v-if="showProcessModal" class="modal-backdrop" @click.self="showProcessModal = false">
-      <div class="modal" role="dialog" aria-modal="true" aria-label="Process confirmation" style="max-width: 640px;">
+      <div class="modal modal--process" role="dialog" aria-modal="true" aria-label="Process confirmation" style="max-width: 640px;">
         <div class="modal-header" style="padding: 8px 24px 4px;">
           <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">Process voucher?</div>
           <button class="modal-close" @click="showProcessModal = false" aria-label="Close">✕</button>
