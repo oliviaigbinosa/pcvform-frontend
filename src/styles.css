@@ -593,15 +593,6 @@ textarea {
   color: var(--primary);
 }
 
-.modal--process .modal-header {
-  background: #dbeafe;
-  border-bottom-color: #bfdbfe;
-}
-
-.modal--process .modal-header__title {
-  color: #2563eb;
-}
-
 .modal-close {
   width: 32px;
   height: 32px;
@@ -1800,8 +1791,8 @@ router-link {
 }
 
 .approve-message.processed {
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
-  color: var(--primary);
+  background: #dbeafe;
+  color: #2563eb;
 }
 
 .approve-message.declined {
