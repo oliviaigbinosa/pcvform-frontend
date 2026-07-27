@@ -228,7 +228,7 @@
               <td class="text-muted">{{ voucher.department }}</td>
               <td><span class="voucher-purpose" :class="{ expanded: expandedPurposes[voucher.id] }" @click.stop="togglePurpose(voucher.id)">{{ voucher.purpose }}</span></td>
               <td class="text-right font-mono font-medium">₦{{ voucher.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
-              <td class="text-center"><span class="status-badge" :class="'status-badge--' + (voucher.status?.toLowerCase() || 'pending')">{{ voucher.status || 'Pending' }}</span></td>
+              <td class="text-center"><span class="status-badge" :class="'status-badge--' + displayStatus(voucher.status).toLowerCase()">{{ displayStatus(voucher.status) }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -406,7 +406,12 @@ const sentVouchers = computed(() =>
 )
 const receivedVouchers = computed(() =>
   allVouchers.value.filter((voucher) => {
-    if (isSuperAdmin.value) return voucher.submittedBy !== userEmail.value
+    if (isSuperAdmin.value) {
+      return (
+        voucher.submittedBy !== userEmail.value &&
+        ['Approved', 'Processed', 'Declined'].includes(voucher.status || 'Pending')
+      )
+    }
     const email = userEmail.value.toLowerCase()
     return (
       String(voucher.to).toLowerCase() === email ||
@@ -417,6 +422,11 @@ const receivedVouchers = computed(() =>
 const displayedVouchers = computed(() =>
   activeTab.value === 'sent' ? sentVouchers.value : receivedVouchers.value,
 )
+
+function displayStatus(status) {
+  if (isSuperAdmin.value && activeTab.value === 'received' && status === 'Approved') return 'Pending'
+  return status || 'Pending'
+}
 
 </script>
 
