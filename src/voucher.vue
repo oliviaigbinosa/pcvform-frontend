@@ -363,7 +363,13 @@ const sentVouchers = computed(() =>
   allVouchers.value.filter((voucher) => voucher.submittedBy === userEmail.value),
 )
 const receivedVouchers = computed(() =>
-  allVouchers.value.filter((voucher) => voucher.to === userEmail.value),
+  allVouchers.value.filter((voucher) => {
+    const email = userEmail.value.toLowerCase()
+    return (
+      String(voucher.to).toLowerCase() === email ||
+      (String(voucher.cc).toLowerCase() === email && voucher.status === 'Approved')
+    )
+  }),
 )
 const displayedVouchers = computed(() =>
   activeTab.value === 'sent' ? sentVouchers.value : receivedVouchers.value,
