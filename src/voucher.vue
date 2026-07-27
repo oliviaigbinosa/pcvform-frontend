@@ -27,10 +27,10 @@
           This voucher has been approved
         </div>
         <div v-else-if="isSuperAdmin" class="approve-actions-bar">
-          <button class="btn btn-approve" :disabled="processing" @click="showProcessModal = true">
+          <button class="btn btn-primary" :disabled="processing" @click="showProcessModal = true">
             {{ processing && processingAction === 'process' ? 'Processing…' : 'Process' }}
           </button>
-          <button class="btn btn-decline" @click="showDeclineModal = true">Decline</button>
+          <button class="btn btn-decline-subtle" @click="showDeclineModal = true">Decline</button>
         </div>
         <div v-else class="approve-actions-bar">
           <button class="btn btn-approve" :disabled="processing" @click="showApproveModal = true">
@@ -245,7 +245,7 @@
         </div>
         <div class="modal-footer" style="border-top: none;">
           <button class="btn btn-outline" style="border-radius: 9999px;" @click="showDeclineModal = false">Cancel</button>
-          <button class="btn btn-decline" :disabled="processing" style="border-radius: 9999px;" @click="confirmDecline">
+          <button class="btn" :class="isSuperAdmin ? 'btn-decline-subtle' : 'btn-decline'" :disabled="processing" style="border-radius: 9999px;" @click="confirmDecline">
             {{ processing && processingAction === 'decline' ? 'Declining…' : 'Yes, Decline' }}
           </button>
         </div>
@@ -281,7 +281,7 @@
         </div>
         <div class="modal-footer" style="border-top: none;">
           <button class="btn btn-outline" style="border-radius: 9999px;" @click="showProcessModal = false">Cancel</button>
-          <button class="btn btn-approve" :disabled="processing" style="border-radius: 9999px;" @click="confirmProcess">
+          <button class="btn btn-primary" :disabled="processing" style="border-radius: 9999px;" @click="confirmProcess">
             {{ processing && processingAction === 'process' ? 'Processing…' : 'Yes, Process' }}
           </button>
         </div>
@@ -325,8 +325,6 @@ function openVoucher(voucher) {
 async function setDecision(status) {
   if (!selectedVoucher.value) return
   await updateVoucherStatus(selectedVoucher.value.id, status)
-  const updated = allVouchers.value.find((v) => v.id === selectedVoucher.value.id)
-  if (updated) selectedVoucher.value = updated
 }
 
 async function notifyCcOfApproval() {
@@ -367,6 +365,8 @@ async function confirmApprove() {
     processingAction.value = ''
   }
   showApproveModal.value = false
+  const updated = allVouchers.value.find((v) => v.id === selectedVoucher.value.id)
+  if (updated) selectedVoucher.value = updated
 }
 
 async function confirmProcess() {
@@ -380,6 +380,8 @@ async function confirmProcess() {
     processingAction.value = ''
   }
   showProcessModal.value = false
+  const updated = allVouchers.value.find((v) => v.id === selectedVoucher.value.id)
+  if (updated) selectedVoucher.value = updated
 }
 
 async function confirmDecline() {
@@ -393,6 +395,8 @@ async function confirmDecline() {
     processingAction.value = ''
   }
   showDeclineModal.value = false
+  const updated = allVouchers.value.find((v) => v.id === selectedVoucher.value.id)
+  if (updated) selectedVoucher.value = updated
 }
 
 function openFilePreview(doc) {

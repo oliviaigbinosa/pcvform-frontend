@@ -1818,6 +1818,16 @@ router-link {
   border-color: #c0392b;
 }
 
+.btn-decline-subtle {
+  background: var(--muted);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+.btn-decline-subtle:hover:not(:disabled) {
+  background: #e3dfd8;
+}
+
 /* ═══════════════════════════════════════════════════════════
    FILE PREVIEW
    ═══════════════════════════════════════════════════════════ */
