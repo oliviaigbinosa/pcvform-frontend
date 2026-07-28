@@ -1800,6 +1800,11 @@ router-link {
   color: var(--fg);
 }
 
+.approve-message.declined-admin {
+  background: #f8e3e3;
+  color: #c0392b;
+}
+
 .approve-actions-bar .btn {
   padding: 12px 40px;
   font-size: 16px;

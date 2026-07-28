@@ -20,7 +20,7 @@
         <div v-if="selectedVoucher.status === 'Processed'" class="approve-message card processed">
           This voucher has been processed
         </div>
-        <div v-else-if="selectedVoucher.status === 'Declined'" class="approve-message card declined">
+        <div v-else-if="selectedVoucher.status === 'Declined'" :class="['approve-message', 'card', isSuperAdmin ? 'declined' : 'declined-admin']">
           This voucher has been declined
         </div>
         <div v-else-if="selectedVoucher.status === 'Approved' && !isSuperAdmin" class="approve-message card success">
