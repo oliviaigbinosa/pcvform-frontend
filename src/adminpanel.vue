@@ -168,7 +168,7 @@
         </div>
         <template v-else>
           <div class="admin-filters card">
-          <div ref="deptDropdownRef" class="field admin-filter-field custom-select">
+          <div v-if="isSuperAdmin" ref="deptDropdownRef" class="field admin-filter-field custom-select">
             <label class="mono-label">Filter by Department</label>
             <button
               type="button"
