@@ -33,7 +33,9 @@ function logoutUser() {
 async function fetchVouchers() {
   loadingVouchers.value = true
   try {
-    const res = await fetch(`${API_BASE}/api/vouchers`)
+    const headers: Record<string, string> = {}
+    if (userEmail.value) headers['x-admin-email'] = userEmail.value
+    const res = await fetch(`${API_BASE}/api/vouchers`, { headers })
     if (!res.ok) {
       throw new Error('Failed to fetch vouchers')
     }
