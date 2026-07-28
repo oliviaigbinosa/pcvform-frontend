@@ -4,6 +4,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 const userEmail = ref(sessionStorage.getItem('pcv_user') || '')
 const userRole = ref(sessionStorage.getItem('pcv_role') || '')
+const userDepartment = ref('')
 const isLoggedIn = ref(Boolean(userEmail.value))
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const allVouchers = ref<any[]>([])
@@ -21,10 +22,12 @@ function loginUser(email: string, role = 'user') {
 function logoutUser() {
   userEmail.value = ''
   userRole.value = ''
+  userDepartment.value = ''
   isLoggedIn.value = false
 
   sessionStorage.removeItem('pcv_user')
   sessionStorage.removeItem('pcv_role')
+  sessionStorage.removeItem('pcv_department')
 }
 
 async function fetchVouchers() {
@@ -139,6 +142,23 @@ async function sendInviteEmail(email: string, password: string, from?: string) {
   }
 }
 
+async function fetchCurrentUser() {
+  const email = userEmail.value
+  if (!email) {
+    userDepartment.value = ''
+    return
+  }
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
+    headers: { 'x-user-email': email },
+  })
+  if (!res.ok) {
+    userDepartment.value = ''
+    throw new Error('Failed to fetch current user')
+  }
+  const data = await res.json()
+  userDepartment.value = data.department || ''
+}
+
 export {
   addOnboardingUser,
   API_BASE,
@@ -156,6 +176,8 @@ export {
   removeOnboardingUser,
   sendInviteEmail,
   updateVoucherStatus,
+  fetchCurrentUser,
+  userDepartment,
   userEmail,
   userRole,
 }

@@ -398,7 +398,7 @@
             />
             <span v-if="onboardErrors.email" class="err-msg">{{ onboardErrors.email }}</span>
           </div>
-          <div ref="onboardDeptDropdownRef" class="field onboarding-field custom-select">
+          <div v-if="isSuperAdmin" ref="onboardDeptDropdownRef" class="field onboarding-field custom-select">
             <label class="mono-label">Department </label>
             <button
               type="button"
@@ -441,6 +441,16 @@
                 {{ department }}
               </button>
             </div>
+            <span v-if="onboardErrors.department" class="err-msg">{{ onboardErrors.department }}</span>
+          </div>
+          <div v-else class="field onboarding-field">
+            <label class="mono-label">Department </label>
+            <input
+              v-model="onboardForm.department"
+              type="text"
+              readonly
+              :class="{ error: onboardErrors.department }"
+            />
             <span v-if="onboardErrors.department" class="err-msg">{{ onboardErrors.department }}</span>
           </div>
           <div v-if="userRole === 'super admin'" ref="onboardRoleDropdownRef" class="field onboarding-field custom-select">
@@ -587,8 +597,10 @@ import {
   addOnboardingUser,
   removeOnboardingUser,
   fetchOnboardingUsers,
+  fetchCurrentUser,
   userEmail,
   userRole,
+  userDepartment,
   sendInviteEmail,
 } from './stores/appState'
 
@@ -627,6 +639,14 @@ onMounted(async () => {
     onboardErrors.general = 'Could not load users. Make sure the backend is running.'
   } finally {
     loadingUsers.value = false
+  }
+  try {
+    await fetchCurrentUser()
+  } catch {
+    // Department stays empty if the fetch fails
+  }
+  if (userRole.value !== 'super admin') {
+    onboardForm.department = userDepartment.value || ''
   }
   window.addEventListener('click', closeDropdowns)
 })

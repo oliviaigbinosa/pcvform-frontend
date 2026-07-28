@@ -188,6 +188,7 @@
               filter="[^A-Za-z\s]"
               placeholder="e.g. Marketing, Operations, HR"
               :error="errors.department"
+              :readonly="Boolean(userDepartment)"
               hint="Populates the voucher number above."
               @input="clearErr('department')"
             />
@@ -350,7 +351,7 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from './stores/appState'
+import { addVoucher, userEmail, userDepartment, fetchCurrentUser, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from './stores/appState'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEPS = ['Email Details', 'Payee Info', 'Amount & Purpose', 'Documents & Review']
@@ -525,6 +526,12 @@ onMounted(async () => {
   } catch {
     // Silently fail - users can still manually enter email if needed
   }
+  try {
+    await fetchCurrentUser()
+    form.department = userDepartment.value || ''
+  } catch {
+    // Department stays empty if the fetch fails
+  }
   window.addEventListener('click', closeToDropdown)
 })
 
@@ -538,7 +545,7 @@ const form = reactive({
   cc: 'finance@getpayedmail.com',
   subject: '',
   payee: '',
-  department: '',
+  department: userDepartment.value || '',
   amountFigures: '',
   amountWords: '',
   purpose: '',
@@ -684,7 +691,7 @@ function resetForm() {
     cc: 'finance@getpayedmail.com',
     subject: '',
     payee: '',
-    department: '',
+    department: userDepartment.value || '',
     amountFigures: '',
     amountWords: '',
     purpose: '',
