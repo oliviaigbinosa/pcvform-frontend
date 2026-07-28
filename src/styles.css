@@ -1660,12 +1660,20 @@ textarea {
   background: color-mix(in srgb, var(--primary) 12%, transparent);
   color: var(--primary);
   border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 .status-badge--declined {
-  background: #e3dfd8;
-  color: var(--fg);
-  border-color: #d7d2c9;
+  background: #f8e3e3;
+  color: #9b2c2c;
+  border-color: #e6b0b0;
+  box-shadow: 0 0 8px color-mix(in srgb, #9b2c2c 35%, transparent);
+}
+
+.status-badge--declined-admin {
+  background: #f8e3e3;
+  color: #c0392b;
+  border-color: #e6b0b0;
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
@@ -1796,8 +1804,8 @@ router-link {
 }
 
 .approve-message.declined {
-  background: #e3dfd8;
-  color: var(--fg);
+  background: #f8e3e3;
+  color: #9b2c2c;
 }
 
 .approve-message.declined-admin {
@@ -1834,13 +1842,14 @@ router-link {
 }
 
 .btn-decline-subtle {
-  background: #e3dfd8;
-  color: var(--fg);
-  border: 1px solid var(--border);
+  background: #b03d3d;
+  color: #fff;
+  border: 1px solid #b03d3d;
 }
 
 .btn-decline-subtle:hover:not(:disabled) {
-  background: #d7d2c9;
+  background: #8c2f2f;
+  border-color: #8c2f2f;
 }
 
 /* ═══════════════════════════════════════════════════════════
