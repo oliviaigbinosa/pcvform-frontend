@@ -102,92 +102,144 @@
         </button>
         </div>
   </form>
-        <div
-        v-if="showPreview"
-        class="modal-backdrop"
-        @click.self="showPreview = false"
-        >
-        <div class="modal">
+       <div
+  v-if="showPreview"
+  class="modal-backdrop"
+  @click.self="showPreview = false"
+>
+  <div class="modal">
 
-            <div class="modal-header">
-            <h2>Leave Request Preview</h2>
+    <div class="modal-header">
+      <div class="modal-header__title">
+        <span class="preview-icon">👁</span>
+        Form Preview
+      </div>
 
-            <button
-                class="modal-close"
-                @click="showPreview = false"
-            >
-                ✕
-            </button>
-            </div>
+      <button
+        class="modal-close"
+        @click="showPreview = false"
+      >
+        ✕
+      </button>
+    </div>
 
-            <div class="modal-body">
+    <div class="modal-body">
 
-            <div class="preview-item">
-                <strong>Employee Name:</strong>
-                {{ form.employeeName }}
-            </div>
+      <div class="preview-head">
+        <div>
+          <p class="company-label">
+            Getpayed Technology Solutions Ltd.
+          </p>
 
-            <div class="preview-item">
-                <strong>Department:</strong>
-                {{ form.department }}
-            </div>
+          <h2 class="preview-title serif">
+            Leave Request Form
+          </h2>
+        </div>
 
-            <div class="preview-item">
-                <strong>Leave Type:</strong>
-                {{ form.leaveType }}
-            </div>
+        <div class="preview-head__right">
+          <p class="mono-label tiny">
+            Request No.
+          </p>
 
-            <div class="preview-item">
-                <strong>Start Date:</strong>
-                {{ form.startDate }}
-            </div>
+          <code class="voucher-no">
+            LRF/2026/07/001
+          </code>
+        </div>
+      </div>
 
-            <div class="preview-item">
-                <strong>End Date:</strong>
-                {{ form.endDate }}
-            </div>
+      <div class="preview-section">
+        <h3 class="preview-section__title mono-label">
+          Employee Details
+        </h3>
 
-            <div class="preview-item">
-                <strong>Reason:</strong>
-                <p>{{ form.reason }}</p>
-            </div>
+        <div class="preview-rows">
+          <div class="preview-row">
+            <span>Employee Name</span>
+            <span>{{ form.employeeName || "—" }}</span>
+          </div>
 
-            <div class="preview-item">
-                <strong>Attachments:</strong>
+          <div class="preview-row">
+            <span>Department</span>
+            <span>{{ form.department || "—" }}</span>
+          </div>
+        </div>
+      </div>
 
-                <ul v-if="attachments.length">
-                <li
-                    v-for="file in attachments"
-                    :key="file.name"
+      <div class="preview-section">
+        <h3 class="preview-section__title mono-label">
+          Leave Details
+        </h3>
+
+        <div class="preview-rows">
+          <div class="preview-row">
+            <span>Leave Type</span>
+            <span>{{ form.leaveType || "—" }}</span>
+          </div>
+
+          <div class="preview-row">
+            <span>Start Date</span>
+            <span>{{ form.startDate || "—" }}</span>
+          </div>
+
+          <div class="preview-row">
+            <span>End Date</span>
+            <span>{{ form.endDate || "—" }}</span>
+          </div>
+
+          <div class="preview-row block-row">
+            <span>Reason</span>
+            <span>{{ form.reason || "—" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-section">
+        <h3 class="preview-section__title mono-label">
+          Supporting Documents
+        </h3>
+
+        <div class="preview-rows">
+          <div class="preview-row">
+            <span>Attached Files</span>
+
+            <span>
+              <template v-if="attachments.length">
+                <span
+                  v-for="(file, i) in attachments"
+                  :key="i"
                 >
-                    {{ file.name }}
-                </li>
-                </ul>
+                  {{ file.name }}{{ i < attachments.length - 1 ? ", " : "" }}
+                </span>
+              </template>
 
-                <span v-else>No attachment</span>
-            </div>
-
-            </div>
-
-            <div class="modal-footer">
-            <button
-                class="btn btn-outline"
-                @click="showPreview = false"
-            >
-                Back
-            </button>
-
-            <button
-                class="btn btn-primary"
-                @click="submitLeave"
-            >
-                Confirm & Submit
-            </button>
-            </div>
-
+              <template v-else>
+                None
+              </template>
+            </span>
+          </div>
         </div>
-        </div>
-    
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button
+        class="btn btn-outline"
+        @click="showPreview = false"
+      >
+        Back
+      </button>
+
+      <button
+        class="btn btn-primary"
+        @click="submitLeave"
+      >
+        Confirm &amp; Submit
+      </button>
+    </div>
+
+  </div>
+</div>
 </template>
 
 <script setup>
@@ -250,7 +302,7 @@ function submitLeave() {
 
 .employee-name-row {
   grid-column: 1 / -1;   
-  width: 70%;            
+  width: 100%;            
 }
 .header-text {
   padding-top: 4px;
@@ -353,27 +405,149 @@ function submitLeave() {
   }
 }
 
-.button-group {
+.modal {
+  max-width: 760px;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.modal-header {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a2b4c;
+}
+
+.modal-body {
+  padding: 28px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* ===== Header ===== */
+
+.preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #ececec;
+  margin-bottom: 24px;
+}
+
+.preview-head__right {
+  text-align: right;
+}
+
+.company-label {
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: #8b7355;
+  margin: 0 0 6px;
+}
+
+.preview-title {
+  margin: 0;
+  color: #1a2b4c;
+}
+
+.serif {
+  font-family: Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.mono-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: #8a92a0;
+}
+
+.tiny {
+  margin-bottom: 6px;
+}
+
+.voucher-no {
+  background: #f4f4f4;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1a2b4c;
+}
+
+/* ===== Sections ===== */
+
+.preview-section {
   margin-top: 24px;
 }
 
-.preview-item {
-  margin-bottom: 18px;
+.preview-section:first-of-type {
+  margin-top: 0;
 }
 
-.preview-item strong {
-  display: block;
-  margin-bottom: 4px;
+.preview-section__title {
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #ececec;
 }
 
-.preview-item p {
-  margin: 6px 0 0;
+/* ===== Rows ===== */
+
+.preview-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.modal {
-  max-width: 700px;
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  font-size: 14px;
 }
+
+.preview-row span:first-child {
+  color: #8a92a0;
+  font-weight: 500;
+}
+
+.preview-row span:last-child {
+  color: #1a2b4c;
+  text-align: right;
+}
+
+.block-row {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.block-row span:last-child {
+  text-align: left;
+}
+
+/* ===== Footer ===== */
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 28px;
+  border-top: 1px solid #eee;
+}
+
 </style>
