@@ -33,12 +33,13 @@
     <form class="card" @submit.prevent="submitLeave">
   <div class="form-grid">
 
-    <FormField
-      class="full-width"
-      label="Employee Name"
-      v-model="form.employeeName"
-      placeholder="Enter your full name"
-    />
+        <div class="employee-name-row">
+        <FormField
+            label="Employee Name"
+            v-model="form.employeeName"
+            placeholder="Enter your full name"
+        />
+        </div>
 
             <FormField
         type="select"
@@ -84,11 +85,108 @@
 
      </div>
 
-        <button class="btn btn-primary" type="submit">
+            <div class="button-group">
+        <button
+            type="button"
+            class="btn btn-outline"
+            @click="showPreview = true"
+        >
+            Preview
+        </button>
+
+        <button
+            class="btn btn-primary"
+            type="submit"
+        >
             Submit Request
         </button>
+        </div>
   </form>
+        <div
+        v-if="showPreview"
+        class="modal-backdrop"
+        @click.self="showPreview = false"
+        >
+        <div class="modal">
 
+            <div class="modal-header">
+            <h2>Leave Request Preview</h2>
+
+            <button
+                class="modal-close"
+                @click="showPreview = false"
+            >
+                ✕
+            </button>
+            </div>
+
+            <div class="modal-body">
+
+            <div class="preview-item">
+                <strong>Employee Name:</strong>
+                {{ form.employeeName }}
+            </div>
+
+            <div class="preview-item">
+                <strong>Department:</strong>
+                {{ form.department }}
+            </div>
+
+            <div class="preview-item">
+                <strong>Leave Type:</strong>
+                {{ form.leaveType }}
+            </div>
+
+            <div class="preview-item">
+                <strong>Start Date:</strong>
+                {{ form.startDate }}
+            </div>
+
+            <div class="preview-item">
+                <strong>End Date:</strong>
+                {{ form.endDate }}
+            </div>
+
+            <div class="preview-item">
+                <strong>Reason:</strong>
+                <p>{{ form.reason }}</p>
+            </div>
+
+            <div class="preview-item">
+                <strong>Attachments:</strong>
+
+                <ul v-if="attachments.length">
+                <li
+                    v-for="file in attachments"
+                    :key="file.name"
+                >
+                    {{ file.name }}
+                </li>
+                </ul>
+
+                <span v-else>No attachment</span>
+            </div>
+
+            </div>
+
+            <div class="modal-footer">
+            <button
+                class="btn btn-outline"
+                @click="showPreview = false"
+            >
+                Back
+            </button>
+
+            <button
+                class="btn btn-primary"
+                @click="submitLeave"
+            >
+                Confirm & Submit
+            </button>
+            </div>
+
+        </div>
+        </div>
     
 </template>
 
@@ -96,7 +194,9 @@
 import { reactive } from 'vue'
 import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
+import { ref } from 'vue'
 
+const showPreview = ref(false)
 const form = reactive({
   employeeName: '',
   employeeId: '',
@@ -148,6 +248,10 @@ function submitLeave() {
   gap: 18px;
 }
 
+.employee-name-row {
+  grid-column: 1 / -1;   
+  width: 70%;            
+}
 .header-text {
   padding-top: 4px;
 }
@@ -247,5 +351,29 @@ function submitLeave() {
   .card {
     padding: 24px;
   }
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.preview-item {
+  margin-bottom: 18px;
+}
+
+.preview-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.preview-item p {
+  margin: 6px 0 0;
+}
+
+.modal {
+  max-width: 700px;
 }
 </style>
