@@ -1791,8 +1791,8 @@ router-link {
 }
 
 .approve-message.processed {
-  background: #dbeafe;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  color: var(--primary);
 }
 
 .approve-message.declined {
