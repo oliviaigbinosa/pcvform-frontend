@@ -524,7 +524,28 @@
         </form>
       </div>
 
-      <div v-if="!onboardingUsers.length" class="vouchers-empty card">
+      <nav v-if="isSuperAdmin" class="dashboard-tabs onboarding-list-tabs" role="tablist" aria-label="Onboarded users">
+        <button
+          role="tab"
+          class="dashboard-tabs__tab"
+          :class="{ active: onboardingListTab === 'users' }"
+          :aria-selected="onboardingListTab === 'users'"
+          @click="onboardingListTab = 'users'"
+        >
+          Users
+        </button>
+        <button
+          role="tab"
+          class="dashboard-tabs__tab"
+          :class="{ active: onboardingListTab === 'admins' }"
+          :aria-selected="onboardingListTab === 'admins'"
+          @click="onboardingListTab = 'admins'"
+        >
+          Admins
+        </button>
+      </nav>
+
+      <div v-if="!displayedOnboardingUsers.length" class="vouchers-empty card">
         <svg
           width="40"
           height="40"
@@ -538,7 +559,7 @@
           <line x1="20" y1="8" x2="20" y2="14" />
           <line x1="23" y1="11" x2="17" y2="11" />
         </svg>
-        <p class="vouchers-empty__title">No users onboarded yet</p>
+        <p class="vouchers-empty__title">No {{ isSuperAdmin ? onboardingListTab : 'users' }} onboarded yet</p>
         <p class="vouchers-empty__sub">Add users above to grant them access to the system.</p>
       </div>
 
@@ -555,7 +576,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(user, index) in onboardingUsers" :key="user.id" class="vouchers-table__row">
+            <tr v-for="(user, index) in displayedOnboardingUsers" :key="user.id" class="vouchers-table__row">
               <td class="text-center text-muted">{{ index + 1 }}</td>
               <td>
                 <div class="admin-user-cell">
@@ -605,6 +626,7 @@ import {
 } from './stores/appState'
 
 const activeTab = ref('vouchers')
+const onboardingListTab = ref('users')
 const selectedVoucher = ref(null)
 const addingUser = ref(false)
 const removingUserId = ref('')
@@ -658,6 +680,14 @@ onMounted(async () => {
 const adminFilter = reactive({ dept: '', user: '', status: '' })
 
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
+
+const displayedOnboardingUsers = computed(() => {
+  if (!isSuperAdmin.value) return onboardingUsers.value
+  if (onboardingListTab.value === 'admins') {
+    return onboardingUsers.value.filter((user) => user.role === 'admin')
+  }
+  return onboardingUsers.value.filter((user) => user.role === 'user')
+})
 
 const adminBaseVouchers = computed(() =>
   [...allVouchers.value].reverse().filter((voucher) => {
@@ -917,5 +947,14 @@ async function handleRemoveUser(id) {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.04em;
+}
+
+.onboarding-list-tabs {
+  width: 100%;
+}
+
+.onboarding-list-tabs .dashboard-tabs__tab {
+  flex: 1;
+  justify-content: center;
 }
 </style>

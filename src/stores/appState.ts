@@ -5,31 +5,36 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 const userEmail = ref(sessionStorage.getItem('pcv_user') || '')
 const userRole = ref(sessionStorage.getItem('pcv_role') || '')
 const userDepartment = ref(localStorage.getItem('pcv_department') || '')
+const userCreatedBy = ref(localStorage.getItem('pcv_createdBy') || '')
 const isLoggedIn = ref(Boolean(userEmail.value))
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const allVouchers = ref<any[]>([])
 const loadingVouchers = ref(true)
 
-function loginUser(email: string, role = 'user', department = '') {
+function loginUser(email: string, role = 'user', department = '', createdBy = '') {
   userEmail.value = email
   userRole.value = role
   userDepartment.value = department
+  userCreatedBy.value = createdBy
   isLoggedIn.value = true
 
   sessionStorage.setItem('pcv_user', email)
   sessionStorage.setItem('pcv_role', role)
   localStorage.setItem('pcv_department', department)
+  localStorage.setItem('pcv_createdBy', createdBy)
 }
 
 function logoutUser() {
   userEmail.value = ''
   userRole.value = ''
   userDepartment.value = ''
+  userCreatedBy.value = ''
   isLoggedIn.value = false
 
   sessionStorage.removeItem('pcv_user')
   sessionStorage.removeItem('pcv_role')
   localStorage.removeItem('pcv_department')
+  localStorage.removeItem('pcv_createdBy')
 }
 
 async function fetchVouchers() {
@@ -159,7 +164,9 @@ async function fetchCurrentUser() {
   }
   const data = await res.json()
   userDepartment.value = data.department || ''
+  userCreatedBy.value = data.createdBy || ''
   localStorage.setItem('pcv_department', userDepartment.value)
+  localStorage.setItem('pcv_createdBy', userCreatedBy.value)
 }
 
 export {
@@ -180,6 +187,7 @@ export {
   sendInviteEmail,
   updateVoucherStatus,
   fetchCurrentUser,
+  userCreatedBy,
   userDepartment,
   userEmail,
   userRole,

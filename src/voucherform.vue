@@ -351,7 +351,7 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, userDepartment, fetchCurrentUser, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from './stores/appState'
+import { addVoucher, userEmail, userDepartment, userCreatedBy, fetchCurrentUser, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from './stores/appState'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEPS = ['Email Details', 'Payee Info', 'Amount & Purpose', 'Documents & Review']
@@ -529,6 +529,7 @@ onMounted(async () => {
   try {
     await fetchCurrentUser()
     form.department = userDepartment.value || ''
+    form.to = userCreatedBy.value || ''
   } catch {
     // Department stays empty if the fetch fails
   }
@@ -541,7 +542,7 @@ onBeforeUnmount(() => {
 
 const form = reactive({
   from: userEmail.value,
-  to: '',
+  to: userCreatedBy.value || '',
   cc: 'finance@getpayedmail.com',
   subject: '',
   payee: '',
@@ -679,7 +680,7 @@ async function submitVoucher() {
 function resetForm() {
   Object.assign(form, {
     from: userEmail.value,
-    to: '',
+    to: userCreatedBy.value || '',
     cc: 'finance@getpayedmail.com',
     subject: '',
     payee: '',
