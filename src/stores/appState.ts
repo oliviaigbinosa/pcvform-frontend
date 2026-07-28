@@ -83,7 +83,9 @@ type OnboardingUser = {
 const onboardingUsers = ref<OnboardingUser[]>([])
 
 async function fetchOnboardingUsers() {
-  const res = await fetch(`${API_BASE}/api/admin/users`)
+  const res = await fetch(`${API_BASE}/api/admin/users`, {
+    headers: { 'x-admin-email': userEmail.value },
+  })
   if (!res.ok) {
     throw new Error('Failed to load users')
   }

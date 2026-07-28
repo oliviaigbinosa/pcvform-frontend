@@ -573,14 +573,6 @@ const displayAmount = computed({
 })
 
 watch(
-  () => form.department,
-  (dept) => {
-    if (!form.subject || form.subject.startsWith('Petty Cash Request')) {
-      form.subject = `Petty Cash Request — ${dept || 'Department'} — ${monthName(currentMonth())} ${currentYear()}`
-    }
-  },
-)
-watch(
   () => form.amountFigures,
   (val) => {
     form.amountWords = numberToWords(parseFloat(val))

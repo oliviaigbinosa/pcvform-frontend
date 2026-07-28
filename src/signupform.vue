@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!isLoggedIn" class="login-wrap">
+  <div class="login-wrap">
     <div class="login-card">
       <div class="login-card__logo">
         <svg
@@ -96,7 +96,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FormField from '../components/FormField.vue'
-import { API_BASE, fetchCurrentUser, isLoggedIn, loginUser } from './stores/appState'
+import { API_BASE, isLoggedIn, loginUser } from './stores/appState'
 
 const router = useRouter()
 
@@ -145,7 +145,6 @@ async function handleLogin() {
     }
 
     loginUser(data.email, data.role)
-    await fetchCurrentUser()
     router.replace(data.role === 'admin' || data.role === 'super admin' ? { name: 'admin' } : { name: 'form' })
   } catch {
     loginErrors.general = 'Could not reach the server. Make sure the backend is running.'
