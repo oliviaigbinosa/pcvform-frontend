@@ -17,22 +17,25 @@
       </button>
 
       <template v-if="activeTab === 'received'">
-        <div v-if="selectedVoucher.status === 'Processed'" class="approve-message card processed">
+        <div v-if="isSuperAdmin && selectedVoucher.status === 'Processed'" class="approve-message card processed">
           <span style="display: inline-flex; align-items: center; gap: 6px;">This voucher has been processed<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg></span>
         </div>
-        <div v-else-if="selectedVoucher.status === 'Declined'" :class="['approve-message', 'card', isSuperAdmin ? 'declined' : 'declined-admin']">
-          <span style="display: inline-flex; align-items: center; gap: 6px;">{{ isSuperAdmin ? 'This voucher has been denied' : 'This voucher has been declined' }}<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></span>
+        <div v-else-if="isSuperAdmin && selectedVoucher.status === 'Rejected'" class="approve-message card declined">
+          <span style="display: inline-flex; align-items: center; gap: 6px;">This voucher has been rejected<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></span>
+        </div>
+        <div v-else-if="selectedVoucher.status === 'Declined'" class="approve-message card declined-admin">
+          This voucher has been declined
         </div>
         <div v-else-if="selectedVoucher.status === 'Approved' && !isSuperAdmin" class="approve-message card success">
           This voucher has been approved
         </div>
-        <div v-else-if="isSuperAdmin" class="approve-actions-bar">
-          <button class="btn btn-primary" :disabled="processing" @click="showProcessModal = true">
+        <div v-else-if="isSuperAdmin && selectedVoucher.status === 'Approved'" class="approve-actions-bar">
+          <button class="btn btn-primary" :disabled="processing" style="background: #314668;" @click="showProcessModal = true">
             {{ processing && processingAction === 'process' ? 'Processing…' : 'Process' }}
           </button>
-          <button class="btn btn-decline-subtle" @click="showDeclineModal = true">Deny</button>
+          <button class="btn btn-decline-subtle" @click="showDeclineModal = true">Reject</button>
         </div>
-        <div v-else class="approve-actions-bar">
+        <div v-else-if="!isSuperAdmin && selectedVoucher.status === 'Pending'" class="approve-actions-bar">
           <button class="btn btn-approve" :disabled="processing" @click="showApproveModal = true">
             {{ processing && processingAction === 'approve' ? 'Approving…' : 'Approve' }}
           </button>
@@ -229,10 +232,10 @@
               <td><span class="voucher-purpose" :class="{ expanded: expandedPurposes[voucher.id] }" @click.stop="togglePurpose(voucher.id)">{{ voucher.purpose }}</span></td>
               <td class="text-right font-mono font-medium">₦{{ voucher.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
               <td class="text-center">
-                <span class="status-badge" :class="'status-badge--' + (voucher.status === 'Declined' ? (isSuperAdmin ? 'declined' : 'declined-admin') : displayStatus(voucher.status).toLowerCase())">
-                  <svg v-if="displayStatus(voucher.status) === 'Processed'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><polyline points="20 6 9 17 4 12" /></svg>
-                  <svg v-if="displayStatus(voucher.status) === 'Denied'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                  {{ displayStatus(voucher.status) }}
+                <span class="status-badge" :class="'status-badge--' + (isSuperAdmin && activeTab === 'received' && voucher.status === 'Approved' ? 'pending' : (voucher.status?.toLowerCase() || 'pending'))">
+                  <svg v-if="voucher.status === 'Processed'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><polyline points="20 6 9 17 4 12" /></svg>
+                  <svg v-if="voucher.status === 'Rejected'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  {{ isSuperAdmin && activeTab === 'received' && voucher.status === 'Approved' ? 'Pending' : (voucher.status || 'Pending') }}
                 </span>
               </td>
             </tr>
@@ -241,18 +244,18 @@
       </div>
     </template>
     <div v-if="showDeclineModal" class="modal-backdrop" @click.self="showDeclineModal = false">
-      <div class="modal" role="dialog" aria-modal="true" aria-label="Decline confirmation" style="max-width: 640px;">
+      <div class="modal" role="dialog" aria-modal="true" :aria-label="isSuperAdmin ? 'Reject confirmation' : 'Decline confirmation'" style="max-width: 640px;">
         <div class="modal-header" style="padding: 8px 24px 4px;">
-          <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">Decline voucher?</div>
+          <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">{{ isSuperAdmin ? 'Reject voucher?' : 'Decline voucher?' }}</div>
           <button class="modal-close" @click="showDeclineModal = false" aria-label="Close">✕</button>
         </div>
         <div class="modal-body">
-          <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">Are you sure you want to decline this petty cash voucher?<span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">This action cannot be undone.</span></p>
+          <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">Are you sure you want to {{ isSuperAdmin ? 'reject' : 'decline' }} this petty cash voucher?<span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">This action cannot be undone.</span></p>
         </div>
         <div class="modal-footer" style="border-top: none;">
           <button class="btn btn-outline" style="border-radius: 9999px;" @click="showDeclineModal = false">Cancel</button>
           <button class="btn" :class="isSuperAdmin ? 'btn-decline-subtle' : 'btn-decline'" :disabled="processing" style="border-radius: 9999px;" @click="confirmDecline">
-            {{ processing && processingAction === 'decline' ? (isSuperAdmin ? 'Denying…' : 'Declining…') : (isSuperAdmin ? 'Yes, Deny' : 'Yes, Decline') }}
+            {{ processing && processingAction === 'decline' ? (isSuperAdmin ? 'Rejecting…' : 'Declining…') : (isSuperAdmin ? 'Yes, Reject' : 'Yes, Decline') }}
           </button>
         </div>
       </div>
@@ -395,7 +398,7 @@ async function confirmDecline() {
   processing.value = true
   processingAction.value = 'decline'
   try {
-    await setDecision('Declined')
+    await setDecision(isSuperAdmin.value ? 'Rejected' : 'Declined')
   } finally {
     processing.value = false
     processingAction.value = ''
@@ -417,10 +420,7 @@ const sentVouchers = computed(() =>
 const receivedVouchers = computed(() =>
   allVouchers.value.filter((voucher) => {
     if (isSuperAdmin.value) {
-      return (
-        voucher.submittedBy !== userEmail.value &&
-        ['Approved', 'Processed', 'Declined'].includes(voucher.status || 'Pending')
-      )
+      return ['Approved', 'Processed', 'Rejected'].includes(voucher.status || 'Pending')
     }
     const email = userEmail.value.toLowerCase()
     return (
@@ -433,11 +433,6 @@ const displayedVouchers = computed(() =>
   activeTab.value === 'sent' ? sentVouchers.value : receivedVouchers.value,
 )
 
-function displayStatus(status) {
-  if (isSuperAdmin.value && activeTab.value === 'received' && status === 'Approved') return 'Pending'
-  if (isSuperAdmin.value && status === 'Declined') return 'Denied'
-  return status || 'Pending'
-}
 
 </script>
 

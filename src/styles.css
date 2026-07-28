@@ -1664,6 +1664,12 @@ textarea {
 }
 
 .status-badge--declined {
+  background: color-mix(in srgb, #e74c3c 12%, transparent);
+  color: #e74c3c;
+  border-color: color-mix(in srgb, #e74c3c 25%, transparent);
+}
+
+.status-badge--rejected {
   background: #f8e3e3;
   color: #9b2c2c;
   border-color: #e6b0b0;

@@ -364,7 +364,13 @@
                 <td class="text-muted">{{ voucher.department }}</td>
                 <td><span class="voucher-purpose" :class="{ expanded: expandedPurposes[voucher.id] }" @click.stop="togglePurpose(voucher.id)">{{ voucher.purpose }}</span></td>
                 <td class="text-right font-mono font-medium">₦{{ voucher.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
-                <td class="text-center"><span class="status-badge" :class="'status-badge--' + (voucher.status?.toLowerCase() || 'pending')">{{ voucher.status || 'Pending' }}</span></td>
+                <td class="text-center">
+                  <span class="status-badge" :class="'status-badge--' + (voucher.status?.toLowerCase() || 'pending')">
+                    <svg v-if="voucher.status === 'Processed'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><polyline points="20 6 9 17 4 12" /></svg>
+                    <svg v-if="voucher.status === 'Rejected'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    {{ voucher.status || 'Pending' }}
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -627,8 +633,17 @@ onMounted(async () => {
 
 const adminFilter = reactive({ dept: '', user: '', status: '' })
 
+const isSuperAdmin = computed(() => userRole.value === 'super admin')
+
 const adminBaseVouchers = computed(() =>
-  [...allVouchers.value].reverse().filter((voucher) => voucher.submittedBy !== userEmail.value),
+  [...allVouchers.value].reverse().filter((voucher) => {
+    if (!isSuperAdmin.value) {
+      return voucher.submittedBy !== userEmail.value
+    }
+    const submitted = String(voucher.submittedBy || '').toLowerCase()
+    const current = userEmail.value.toLowerCase()
+    return submitted !== current
+  }),
 )
 const adminDepts = computed(() =>
   [...new Set(adminBaseVouchers.value.map((voucher) => voucher.department).filter(Boolean))].sort(),
