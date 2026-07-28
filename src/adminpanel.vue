@@ -628,7 +628,11 @@ function togglePurpose(id) {
   expandedPurposes[id] = !expandedPurposes[id]
 }
 
-const onboardForm = reactive({ email: '', department: '', role: '' })
+const onboardForm = reactive({
+  email: '',
+  department: userRole.value !== 'super admin' ? (userDepartment.value || '') : '',
+  role: '',
+})
 const onboardErrors = reactive({})
 
 onMounted(async () => {

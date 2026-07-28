@@ -4,19 +4,21 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 const userEmail = ref(sessionStorage.getItem('pcv_user') || '')
 const userRole = ref(sessionStorage.getItem('pcv_role') || '')
-const userDepartment = ref('')
+const userDepartment = ref(localStorage.getItem('pcv_department') || '')
 const isLoggedIn = ref(Boolean(userEmail.value))
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const allVouchers = ref<any[]>([])
 const loadingVouchers = ref(true)
 
-function loginUser(email: string, role = 'user') {
+function loginUser(email: string, role = 'user', department = '') {
   userEmail.value = email
   userRole.value = role
+  userDepartment.value = department
   isLoggedIn.value = true
 
   sessionStorage.setItem('pcv_user', email)
   sessionStorage.setItem('pcv_role', role)
+  localStorage.setItem('pcv_department', department)
 }
 
 function logoutUser() {
@@ -27,7 +29,7 @@ function logoutUser() {
 
   sessionStorage.removeItem('pcv_user')
   sessionStorage.removeItem('pcv_role')
-  sessionStorage.removeItem('pcv_department')
+  localStorage.removeItem('pcv_department')
 }
 
 async function fetchVouchers() {
@@ -148,19 +150,16 @@ async function sendInviteEmail(email: string, password: string, from?: string) {
 
 async function fetchCurrentUser() {
   const email = userEmail.value
-  if (!email) {
-    userDepartment.value = ''
-    return
-  }
+  if (!email) return
   const res = await fetch(`${API_BASE}/api/auth/me`, {
     headers: { 'x-user-email': email },
   })
   if (!res.ok) {
-    userDepartment.value = ''
     throw new Error('Failed to fetch current user')
   }
   const data = await res.json()
   userDepartment.value = data.department || ''
+  localStorage.setItem('pcv_department', userDepartment.value)
 }
 
 export {

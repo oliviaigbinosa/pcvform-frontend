@@ -519,7 +519,6 @@ const showFilePreview = ref(false)
 const previewFile = ref(null)
 const toDropdownOpen = ref(false)
 const toDropdownRef = ref(null)
-const loadingUser = ref(true)
 
 onMounted(async () => {
   try {
@@ -527,14 +526,11 @@ onMounted(async () => {
   } catch {
     // Silently fail - users can still manually enter email if needed
   }
-  loadingUser.value = true
   try {
     await fetchCurrentUser()
     form.department = userDepartment.value || ''
   } catch {
     // Department stays empty if the fetch fails
-  } finally {
-    loadingUser.value = false
   }
   window.addEventListener('click', closeToDropdown)
 })
@@ -564,7 +560,7 @@ const voucherNo = computed(
   () => `PCV/${deptSlug.value}/${currentYear()}/${currentMonth()}/${voucherSerial.value}`,
 )
 
-const voucherNoDisplay = computed(() => (loadingVouchers.value || loadingUser.value ? '' : voucherNo.value))
+const voucherNoDisplay = computed(() => (loadingVouchers.value ? '' : voucherNo.value))
 const parsedAmount = computed(() => parseFloat(form.amountFigures) || 0)
 const formattedAmount = computed(() => formatNumberWithCommas(parsedAmount.value))
 const displayAmount = computed({
