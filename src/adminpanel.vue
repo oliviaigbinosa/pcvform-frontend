@@ -570,7 +570,6 @@
               <th class="text-center">S/N</th>
               <th>User</th>
               <th>Added On</th>
-              <th>Role</th>
               <th>Department</th>
               <th class="text-center">Status</th>
               <th class="text-center">Actions</th>
@@ -586,7 +585,6 @@
                 </div>
               </td>
               <td class="text-muted">{{ formatDate(user.addedAt) }}</td>
-              <td class="text-capitalize">{{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '—' }}</td>
               <td class="text-muted">{{ user.department || '—' }}</td>
               <td class="text-center">
                 <span
@@ -601,7 +599,7 @@
               <td class="text-center">
                 <button
                   type="button"
-                  class="delete-user-btn"
+                  class="btn btn-destructive"
                   @click="promptDeleteUser(user)"
                   :disabled="removingUserId === user.id"
                 >
@@ -1032,30 +1030,6 @@ async function handleRemoveUser(id) {
 .onboarding-list-tabs .dashboard-tabs__tab {
   flex: 1;
   justify-content: center;
-}
-
-.delete-user-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--destructive) 25%, transparent);
-  background: color-mix(in srgb, var(--destructive) 8%, transparent);
-  color: var(--destructive);
-  transition: background 0.15s, color 0.15s;
-}
-
-.delete-user-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--destructive) 18%, transparent);
-}
-
-.delete-user-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .btn-destructive {
