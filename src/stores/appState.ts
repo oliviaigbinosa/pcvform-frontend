@@ -121,7 +121,10 @@ async function addOnboardingUser(email: string, password: string, createdBy?: st
 }
 
 async function removeOnboardingUser(id: string) {
-  const res = await fetch(`${API_BASE}/api/admin/users/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: { 'x-admin-email': userEmail.value },
+  })
   if (!res.ok) {
     const data = await res.json()
     throw new Error(data.error || 'Failed to remove user')

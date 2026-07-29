@@ -1805,8 +1805,9 @@ router-link {
 }
 
 .approve-message.processed {
-  background: color-mix(in srgb, var(--primary) 6%, transparent);
-  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+  color: color-mix(in srgb, var(--primary), #000 20%);
 }
 
 .approve-message.declined {

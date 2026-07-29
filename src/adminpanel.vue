@@ -573,6 +573,7 @@
               <th>Role</th>
               <th>Department</th>
               <th class="text-center">Status</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -597,12 +598,66 @@
                   {{ isUserActive(user.email) ? 'Active' : 'Pending' }}
                 </span>
               </td>
+              <td class="text-center">
+                <button
+                  type="button"
+                  class="delete-user-btn"
+                  @click="promptDeleteUser(user)"
+                  :disabled="removingUserId === user.id"
+                >
+                  {{ removingUserId === user.id ? 'Deleting…' : 'Delete user' }}
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
       
+    </div>
+  </div>
+  <div
+    v-if="showDeleteModal"
+    class="modal-backdrop"
+    @click.self="closeDeleteModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-modal-title"
+  >
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 id="delete-modal-title" class="modal-header__title">Confirm deletion</h3>
+        <button type="button" class="modal-close" @click="closeDeleteModal" aria-label="Close">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete <strong>{{ userToDelete?.email }}</strong>? This action
+          cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" @click="closeDeleteModal">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-destructive"
+          :disabled="removingUserId === userToDelete?.id"
+          @click="confirmDeleteUser"
+        >
+          {{ removingUserId === userToDelete?.id ? 'Deleting…' : 'Delete user' }}
+        </button>
+      </div>
     </div>
   </div>
   <FilePreview :show="showFilePreview" :file="previewFile" @close="showFilePreview = false" />
@@ -630,6 +685,8 @@ const onboardingListTab = ref('users')
 const selectedVoucher = ref(null)
 const addingUser = ref(false)
 const removingUserId = ref('')
+const showDeleteModal = ref(false)
+const userToDelete = ref(null)
 const loadingUsers = ref(false)
 const showFilePreview = ref(false)
 const previewFile = ref(null)
@@ -849,6 +906,25 @@ async function handleAddUser() {
   }
 }
 
+function promptDeleteUser(user) {
+  userToDelete.value = user
+  showDeleteModal.value = true
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false
+  userToDelete.value = null
+}
+
+async function confirmDeleteUser() {
+  if (!userToDelete.value) return
+  try {
+    await handleRemoveUser(userToDelete.value.id)
+  } finally {
+    closeDeleteModal()
+  }
+}
+
 async function handleRemoveUser(id) {
   removingUserId.value = id
   try {
@@ -956,5 +1032,38 @@ async function handleRemoveUser(id) {
 .onboarding-list-tabs .dashboard-tabs__tab {
   flex: 1;
   justify-content: center;
+}
+
+.delete-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--destructive) 25%, transparent);
+  background: color-mix(in srgb, var(--destructive) 8%, transparent);
+  color: var(--destructive);
+  transition: background 0.15s, color 0.15s;
+}
+
+.delete-user-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--destructive) 18%, transparent);
+}
+
+.delete-user-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-destructive {
+  background: var(--destructive);
+  color: #fff;
+}
+
+.btn-destructive:hover:not(:disabled) {
+  opacity: 0.88;
 }
 </style>
