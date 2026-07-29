@@ -603,7 +603,7 @@
                   @click="promptDeleteUser(user)"
                   :disabled="removingUserId === user.id"
                 >
-                  {{ removingUserId === user.id ? 'Deleting…' : 'Delete user' }}
+                  {{ removingUserId === user.id ? 'Deleting…' : (user.role === 'admin' ? 'Delete admin' : 'Delete user') }}
                 </button>
               </td>
             </tr>
@@ -614,46 +614,37 @@
       
     </div>
   </div>
-  <div
-    v-if="showDeleteModal"
-    class="modal-backdrop"
-    @click.self="closeDeleteModal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="delete-modal-title"
-  >
-    <div class="modal" style="max-width: 420px;">
-      <div class="modal-header">
-        <h3 id="delete-modal-title" class="modal-header__title">Confirm deletion</h3>
-        <button type="button" class="modal-close" @click="closeDeleteModal" aria-label="Close">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+  <div v-if="showDeleteModal" class="modal-backdrop" @click.self="closeDeleteModal">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="userToDelete?.role === 'admin' ? 'Delete admin confirmation' : 'Delete user confirmation'"
+      style="max-width: 640px;"
+    >
+      <div class="modal-header" style="padding: 8px 24px 4px;">
+        <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">
+          Delete {{ userToDelete?.role === 'admin' ? 'admin' : 'user' }}?
+        </div>
+        <button class="modal-close" @click="closeDeleteModal" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
-        <p>
-          Are you sure you want to delete <strong>{{ userToDelete?.email }}</strong>? This action
-          cannot be undone.
+        <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">
+          Are you sure you want to delete this {{ userToDelete?.role === 'admin' ? 'admin' : 'user' }}?
+          <span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">
+            {{ userToDelete?.email }} — This action cannot be undone.
+          </span>
         </p>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" @click="closeDeleteModal">Cancel</button>
+      <div class="modal-footer" style="border-top: none;">
+        <button class="btn btn-outline" style="border-radius: 9999px;" @click="closeDeleteModal">Cancel</button>
         <button
-          type="button"
-          class="btn btn-destructive"
+          class="btn btn-sm btn-destructive"
           :disabled="removingUserId === userToDelete?.id"
+          style="border-radius: 9999px;"
           @click="confirmDeleteUser"
         >
-          {{ removingUserId === userToDelete?.id ? 'Deleting…' : 'Delete user' }}
+          {{ removingUserId === userToDelete?.id ? 'Deleting…' : 'Yes, Delete' }}
         </button>
       </div>
     </div>
@@ -744,16 +735,18 @@ const displayedOnboardingUsers = computed(() => {
   return onboardingUsers.value.filter((user) => user.role === 'user')
 })
 
-const adminBaseVouchers = computed(() =>
-  [...allVouchers.value].reverse().filter((voucher) => {
-    if (!isSuperAdmin.value) {
-      return voucher.submittedBy !== userEmail.value
-    }
+const adminBaseVouchers = computed(() => {
+  const onboardedEmails = new Set(onboardingUsers.value.map((user) => user.email.toLowerCase()))
+  return [...allVouchers.value].reverse().filter((voucher) => {
     const submitted = String(voucher.submittedBy || '').toLowerCase()
     const current = userEmail.value.toLowerCase()
-    return submitted !== current
-  }),
-)
+    if (submitted === current) return false
+    if (!isSuperAdmin.value) {
+      return onboardedEmails.has(submitted)
+    }
+    return true
+  })
+})
 const adminDepts = computed(() =>
   [...new Set(adminBaseVouchers.value.map((voucher) => voucher.department).filter(Boolean))].sort(),
 )
