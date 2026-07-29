@@ -599,7 +599,7 @@
               <td class="text-center">
                 <button
                   type="button"
-                  class="btn btn-destructive"
+                  class="btn btn-sm btn-destructive"
                   @click="promptDeleteUser(user)"
                   :disabled="removingUserId === user.id"
                 >
@@ -1039,5 +1039,10 @@ async function handleRemoveUser(id) {
 
 .btn-destructive:hover:not(:disabled) {
   opacity: 0.88;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
 }
 </style>
