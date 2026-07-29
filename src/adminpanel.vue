@@ -383,6 +383,15 @@
 
     <!-- User Onboarding tab -->
     <div v-else role="tabpanel">
+      <div v-if="isSuperAdmin" class="onboarding-actions" style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+        <button type="button" class="btn btn-accent" @click="openCreateDeptModal" style="gap: 6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Create department
+        </button>
+      </div>
       <div class="onboarding-form card">
         <h2 class="onboarding-form__title serif">Onboard New User</h2>
         <p class="onboarding-form__sub">Add a user to grant access to the voucher system.</p>
@@ -614,6 +623,46 @@
       
     </div>
   </div>
+  <div v-if="showCreateDeptModal" class="modal-backdrop" @click.self="closeCreateDeptModal">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create department"
+      style="max-width: 480px;"
+    >
+      <div class="modal-header" style="padding: 8px 24px 4px;">
+        <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">
+          Create department?
+        </div>
+        <button class="modal-close" @click="closeCreateDeptModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="mono-label">Department name</label>
+          <input
+            v-model="newDepartment"
+            type="text"
+            placeholder="e.g. Marketing"
+            :class="{ error: newDepartmentError }"
+            @input="newDepartmentError = ''"
+          />
+          <span v-if="newDepartmentError" class="err-msg">{{ newDepartmentError }}</span>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: none;">
+        <button class="btn btn-outline" style="border-radius: 9999px;" @click="closeCreateDeptModal">Cancel</button>
+        <button
+          class="btn btn-accent"
+          style="border-radius: 9999px;"
+          :disabled="!newDepartment.trim()"
+          @click="handleCreateDepartment"
+        >
+          Create department
+        </button>
+      </div>
+    </div>
+  </div>
   <div v-if="showDeleteModal" class="modal-backdrop" @click.self="closeDeleteModal">
     <div
       class="modal"
@@ -639,7 +688,7 @@
       <div class="modal-footer" style="border-top: none;">
         <button class="btn btn-outline" style="border-radius: 9999px;" @click="closeDeleteModal">Cancel</button>
         <button
-          class="btn btn-sm btn-destructive"
+          class="btn btn-destructive"
           :disabled="removingUserId === userToDelete?.id"
           style="border-radius: 9999px;"
           @click="confirmDeleteUser"
@@ -689,6 +738,9 @@ const onboardDeptDropdownOpen = ref(false)
 const onboardRoleDropdownOpen = ref(false)
 const onboardDeptDropdownRef = ref(null)
 const onboardRoleDropdownRef = ref(null)
+const showCreateDeptModal = ref(false)
+const newDepartment = ref('')
+const newDepartmentError = ref('')
 
 const expandedPurposes = reactive({})
 
@@ -750,7 +802,7 @@ const adminBaseVouchers = computed(() => {
 const adminDepts = computed(() =>
   [...new Set(adminBaseVouchers.value.map((voucher) => voucher.department).filter(Boolean))].sort(),
 )
-const onboardDepts = ['firstDep', 'secondDep', 'thirdDep', 'fourthDep', 'fifthDep']
+const onboardDepts = ref(['firstDep', 'secondDep', 'thirdDep', 'fourthDep', 'fifthDep'])
 const adminUsers = computed(() =>
   [...new Set(adminBaseVouchers.value.map((voucher) => voucher.submittedBy).filter(Boolean))].sort(),
 )
@@ -796,6 +848,30 @@ function selectOnboardRole(role) {
   onboardForm.role = role
   delete onboardErrors.role
   onboardRoleDropdownOpen.value = false
+}
+
+function openCreateDeptModal() {
+  newDepartment.value = ''
+  newDepartmentError.value = ''
+  showCreateDeptModal.value = true
+}
+
+function closeCreateDeptModal() {
+  showCreateDeptModal.value = false
+  newDepartment.value = ''
+  newDepartmentError.value = ''
+}
+
+function handleCreateDepartment() {
+  const dept = newDepartment.value.trim()
+  if (!dept) return
+  if (onboardDepts.value.includes(dept)) {
+    newDepartmentError.value = 'Department already exists'
+    return
+  }
+  onboardDepts.value.push(dept)
+  onboardDepts.value.sort()
+  closeCreateDeptModal()
 }
 
 function closeDropdowns(event) {
@@ -1026,7 +1102,7 @@ async function handleRemoveUser(id) {
 }
 
 .btn-destructive {
-  background: var(--destructive);
+  background: #e60000;
   color: #fff;
 }
 

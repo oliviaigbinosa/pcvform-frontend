@@ -1671,9 +1671,9 @@ textarea {
 
 .status-badge--rejected {
   background: #f8e3e3;
-  color: #9b2c2c;
-  border-color: #e6b0b0;
-  box-shadow: 0 0 8px color-mix(in srgb, #9b2c2c 35%, transparent);
+  color: #cc0000;
+  border-color: #cc0000;
+  box-shadow: 0 0 8px color-mix(in srgb, #cc0000 35%, transparent);
 }
 
 .status-badge--declined-admin {
@@ -1812,7 +1812,7 @@ router-link {
 
 .approve-message.declined {
   background: #f8e3e3;
-  color: #9b2c2c;
+  color: #cc0000;
 }
 
 .approve-message.declined-admin {
@@ -1849,14 +1849,14 @@ router-link {
 }
 
 .btn-decline-subtle {
-  background: #b03d3d;
+  background: #cc0000;
   color: #fff;
-  border: 1px solid #b03d3d;
+  border: 1px solid #cc0000;
 }
 
 .btn-decline-subtle:hover:not(:disabled) {
-  background: #8c2f2f;
-  border-color: #8c2f2f;
+  background: #990000;
+  border-color: #990000;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1878,7 +1878,7 @@ router-link {
   height: 30px;
   border-radius: 4px;
   border: none;
-  background: #c0392b;
+  background: #e60000;
   color: #fff;
   font-size: 16px;
   font-weight: 700;
@@ -1892,7 +1892,7 @@ router-link {
 }
 
 .file-preview-close:hover {
-  background: #a93226;
+  background: #b30000;
 }
 
 .file-preview-title {

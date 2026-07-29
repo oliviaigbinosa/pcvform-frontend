@@ -91,51 +91,22 @@
               placeholder="your-name@getpayedmail.com"
               readonly
             />
-            <div ref="toDropdownRef" class="field custom-select">
-              <label class="mono-label">To (Recipient Email)</label>
-              <button
-                type="button"
-                class="custom-select__trigger"
-                :class="{ error: errors.to }"
-                @click.stop="toDropdownOpen = !toDropdownOpen"
-              >
-                <span class="custom-select__label">{{ form.to || 'Select recipient' }}</span>
-                <svg
-                  class="custom-select__chevron"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              <div v-if="toDropdownOpen" class="custom-select__options">
-                <button
-                  type="button"
-                  class="custom-select__option"
-                  :class="{ selected: form.to === '' }"
-                  @click="selectTo('')"
-                >
-                  Select recipient
-                </button>
-                <button
-                  v-for="user in onboardingUsers"
-                  :key="user.email"
-                  type="button"
-                  class="custom-select__option"
-                  :class="{ selected: form.to === user.email }"
-                  @click="selectTo(user.email)"
-                >
-                  {{ user.email }}
-                </button>
-              </div>
-              <span v-if="errors.to" class="err-msg">{{ errors.to }}</span>
-            </div>
+            <FormField
+              v-if="!isAdmin"
+              v-model="form.to"
+              label="To (Recipient Email)"
+              type="email"
+              placeholder="admin@getpayedmail.com"
+              readonly
+            />
+            <FormField
+              v-if="isAdmin"
+              v-model="form.to"
+              label="To (Recipient Email)"
+              type="email"
+              placeholder="finance@getpayedmail.com"
+              readonly
+            />
             <FormField
               v-model="form.cc"
               label="CC (notified on approval)"
@@ -351,7 +322,7 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, userDepartment, userCreatedBy, fetchCurrentUser, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from './stores/appState'
+import { addVoucher, userEmail, userDepartment, userCreatedBy, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from './stores/appState'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEPS = ['Email Details', 'Payee Info', 'Amount & Purpose', 'Documents & Review']
@@ -524,12 +495,12 @@ onMounted(async () => {
   try {
     await fetchOnboardingUsers()
   } catch {
-    // Silently fail - users can still manually enter email if needed
+    // Silently fail - admins can still select an email if needed
   }
   try {
     await fetchCurrentUser()
     form.department = userDepartment.value || ''
-    form.to = userCreatedBy.value || ''
+    form.to = isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || '')
   } catch {
     // Department stays empty if the fetch fails
   }
@@ -542,7 +513,7 @@ onBeforeUnmount(() => {
 
 const form = reactive({
   from: userEmail.value,
-  to: userCreatedBy.value || '',
+  to: isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || ''),
   cc: 'finance@getpayedmail.com',
   subject: '',
   payee: '',
@@ -635,6 +606,7 @@ function closeToDropdown(event) {
     toDropdownOpen.value = false
   }
 }
+
 function next() {
   if (validate()) step.value = Math.min(step.value + 1, STEPS.length - 1)
 }
@@ -680,7 +652,7 @@ async function submitVoucher() {
 function resetForm() {
   Object.assign(form, {
     from: userEmail.value,
-    to: userCreatedBy.value || '',
+    to: isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || ''),
     cc: 'finance@getpayedmail.com',
     subject: '',
     payee: '',
