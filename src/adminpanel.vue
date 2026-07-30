@@ -439,16 +439,63 @@
               >
                 Select department
               </button>
-              <button
+              <div
                 v-for="department in onboardDepts"
                 :key="department"
-                type="button"
-                class="custom-select__option"
+                class="custom-select__option custom-select__option--row"
                 :class="{ selected: onboardForm.department === department }"
-                @click="selectOnboardDept(department)"
               >
-                {{ department }}
-              </button>
+                <button
+                  type="button"
+                  class="custom-select__option-label"
+                  @click="selectOnboardDept(department)"
+                >
+                  {{ department }}
+                </button>
+                <div class="custom-select__option-actions">
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    @click.stop="openEditDeptModal(department)"
+                    aria-label="Edit department"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--destructive"
+                    @click.stop="openDeleteDeptModal(department)"
+                    aria-label="Delete department"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
             <span v-if="onboardErrors.department" class="err-msg">{{ onboardErrors.department }}</span>
           </div>
@@ -578,7 +625,7 @@
             <tr>
               <th class="text-center">S/N</th>
               <th>User</th>
-              <th>Added On</th>
+              <th class="text-center">Added On</th>
               <th>Department</th>
               <th class="text-center">Status</th>
               <th class="text-center">Actions</th>
@@ -593,7 +640,7 @@
                   <span class="admin-user-email">{{ user.email }}</span>
                 </div>
               </td>
-              <td class="text-muted">{{ formatDate(user.addedAt) }}</td>
+              <td class="text-center text-muted">{{ formatDate(user.addedAt) }}</td>
               <td class="text-muted">{{ user.department || '—' }}</td>
               <td class="text-center">
                 <span
@@ -609,6 +656,7 @@
                 <button
                   type="button"
                   class="btn btn-sm btn-destructive"
+                  style="padding: 5px 10px; font-size: 12px;"
                   @click="promptDeleteUser(user)"
                   :disabled="removingUserId === user.id"
                 >
@@ -651,14 +699,82 @@
         </div>
       </div>
       <div class="modal-footer" style="border-top: none;">
-        <button class="btn btn-outline" style="border-radius: 9999px;" @click="closeCreateDeptModal">Cancel</button>
+        <button class="btn btn-outline" @click="closeCreateDeptModal">Cancel</button>
         <button
           class="btn btn-accent"
-          style="border-radius: 9999px;"
           :disabled="!newDepartment.trim()"
           @click="handleCreateDepartment"
         >
           Create department
+        </button>
+      </div>
+    </div>
+  </div>
+  <div v-if="showEditDeptModal" class="modal-backdrop" @click.self="closeEditDeptModal">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit department"
+      style="max-width: 480px;"
+    >
+      <div class="modal-header" style="padding: 8px 24px 4px;">
+        <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">
+          Edit department?
+        </div>
+        <button class="modal-close" @click="closeEditDeptModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="mono-label">Department name</label>
+          <input
+            v-model="editingDeptName"
+            type="text"
+            placeholder="e.g. Marketing"
+            :class="{ error: editingDeptError }"
+            @input="editingDeptError = ''"
+          />
+          <span v-if="editingDeptError" class="err-msg">{{ editingDeptError }}</span>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: none;">
+        <button class="btn btn-outline" @click="closeEditDeptModal">Cancel</button>
+        <button
+          class="btn btn-accent"
+          :disabled="!editingDeptName.trim() || editingDeptName.trim() === editingDeptOriginal"
+          @click="handleEditDepartment"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+  <div v-if="showDeleteDeptModal" class="modal-backdrop" @click.self="closeDeleteDeptModal">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Delete department"
+      style="max-width: 480px;"
+    >
+      <div class="modal-header" style="padding: 8px 24px 4px;">
+        <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">
+          Delete department?
+        </div>
+        <button class="modal-close" @click="closeDeleteDeptModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">
+          Are you sure you want to delete {{ deptToDelete }}?
+          <span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">
+            This action cannot be undone.
+          </span>
+        </p>
+      </div>
+      <div class="modal-footer" style="border-top: none;">
+        <button class="btn btn-outline" @click="closeDeleteDeptModal">Cancel</button>
+        <button class="btn btn-destructive" @click="confirmDeleteDepartment">
+          Yes, Delete
         </button>
       </div>
     </div>
@@ -741,6 +857,12 @@ const onboardRoleDropdownRef = ref(null)
 const showCreateDeptModal = ref(false)
 const newDepartment = ref('')
 const newDepartmentError = ref('')
+const showEditDeptModal = ref(false)
+const editingDeptOriginal = ref('')
+const editingDeptName = ref('')
+const editingDeptError = ref('')
+const showDeleteDeptModal = ref(false)
+const deptToDelete = ref('')
 
 const expandedPurposes = reactive({})
 
@@ -872,6 +994,63 @@ function handleCreateDepartment() {
   onboardDepts.value.push(dept)
   onboardDepts.value.sort()
   closeCreateDeptModal()
+}
+
+function openEditDeptModal(dept) {
+  editingDeptOriginal.value = dept
+  editingDeptName.value = dept
+  editingDeptError.value = ''
+  showEditDeptModal.value = true
+}
+
+function closeEditDeptModal() {
+  showEditDeptModal.value = false
+  editingDeptOriginal.value = ''
+  editingDeptName.value = ''
+  editingDeptError.value = ''
+}
+
+function handleEditDepartment() {
+  const name = editingDeptName.value.trim()
+  if (!name) {
+    editingDeptError.value = 'Department name is required'
+    return
+  }
+  if (name !== editingDeptOriginal.value && onboardDepts.value.includes(name)) {
+    editingDeptError.value = 'Department already exists'
+    return
+  }
+  const index = onboardDepts.value.indexOf(editingDeptOriginal.value)
+  if (index !== -1) {
+    onboardDepts.value[index] = name
+    onboardDepts.value.sort()
+  }
+  if (onboardForm.department === editingDeptOriginal.value) {
+    onboardForm.department = name
+  }
+  closeEditDeptModal()
+}
+
+function openDeleteDeptModal(dept) {
+  deptToDelete.value = dept
+  showDeleteDeptModal.value = true
+}
+
+function closeDeleteDeptModal() {
+  showDeleteDeptModal.value = false
+  deptToDelete.value = ''
+}
+
+function confirmDeleteDepartment() {
+  if (!deptToDelete.value) return
+  const index = onboardDepts.value.indexOf(deptToDelete.value)
+  if (index !== -1) {
+    onboardDepts.value.splice(index, 1)
+  }
+  if (onboardForm.department === deptToDelete.value) {
+    onboardForm.department = ''
+  }
+  closeDeleteDeptModal()
 }
 
 function closeDropdowns(event) {
@@ -1113,5 +1292,59 @@ async function handleRemoveUser(id) {
 .btn-sm {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+.custom-select__option--row {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+.custom-select__option-label {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.custom-select__option-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-fg);
+  cursor: pointer;
+  padding: 0;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--muted);
+  color: var(--fg);
+}
+
+.icon-btn--destructive:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--destructive);
 }
 </style>
