@@ -1,117 +1,141 @@
 <template>
-  <div class="page-header">
-    <div class="page-header__left">
+  <div class="content">
 
-      <div class="header-icon">
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <rect x="3" y="7" width="18" height="14" rx="2" />
-          <path d="M8 7V5a4 4 0 0 1 8 0v2" />
-        </svg>
+    <div class="page-header">
+
+      <div class="page-header__left">
+
+        <div class="header-icon">
+          <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="2" y="7" width="20" height="14" rx="2" />
+              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+            </svg>
+        </div>
+
+        <div class="header-text">
+          <p class="company-label">
+            Getpayed Technology Solutions Ltd.
+          </p>
+
+          <h1 class="serif">
+            Leave Request Form
+          </h1>
+        </div>
+
       </div>
 
-      <div class="header-text">
-  <p class="company-label">
-    Getpayed Technology Solutions Ltd.
-  </p>
-
-  <h1 class="serif">
-    Leave Request Form
-  </h1>
-
-  
-</div>
-</div>
-</div>
+    </div>
 
     <form class="card" @submit.prevent="submitLeave">
-  <div class="form-grid">
 
-        <div class="employee-name-row">
+      <div class="form-grid">
+
         <FormField
-            label="Employee Name"
-            v-model="form.employeeName"
-            placeholder="Enter your full name"
+  label="Employee Name"
+  v-model="form.employeeName"
+  placeholder="Enter your full name"
+/>
+
+<FormField
+  label="Department Manager"
+  v-model="form.departmentManager"
+  placeholder="Enter department manager"
+/>
+
+        <FormField
+          type="select"
+          label="Department"
+          v-model="form.department"
+          :options="departmentOptions"
+          placeholder="Select Department"
         />
-        </div>
 
-            <FormField
-        type="select"
-        label="Department"
-        v-model="form.department"
-        :options="departmentOptions"
-        placeholder="Select Department"
-    />
+        <FormField
+          type="select"
+          label="Leave Type"
+          v-model="form.leaveType"
+          :options="leaveOptions"
+          placeholder="Select leave type"
+        />
 
-    <FormField
-      type="select"
-      label="Leave Type"
-      v-model="form.leaveType"
-      :options="leaveOptions"
-      placeholder="Select leave type"
-    />
+        <FormField
+          type="date"
+          label="Start Date"
+          v-model="form.startDate"
+        />
 
-    <FormField
-      type="date"
-      label="Start Date"
-      v-model="form.startDate"
-    />
+        <FormField
+          type="date"
+          label="End Date"
+          v-model="form.endDate"
+        />
 
-    <FormField
-      type="date"
-      label="End Date"
-      v-model="form.endDate"
-    />
+        <FormField
+          class="full-width"
+          type="textarea"
+          label="Reason"
+          v-model="form.reason"
+          placeholder="State the reason for your leave request"
+        />
+                <FileUpload
+                class="full-width"
+                label="Supporting Documents (Optional)"
+                v-model:files="attachments"
+                />
+      </div>
 
-    <FormField
-      class="full-width"
-      type="textarea"
-      label="Reason"
-      v-model="form.reason"
-      placeholder="State the reason for your leave request"
-    />
+      <div class="button-group">
+  <button
+  type="button"
+  class="btn btn-primary"
+  @click="showPreview = true"
+>
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
 
-    <FileUpload
-      class="full-width"
-      label="Supporting Documents (Optional)"
-      v-model:files="attachments"
-    />
+  Review &amp; Send
+</button>
+</div>
 
-     </div>
-
-            <div class="button-group">
-        <button
-            type="button"
-            class="btn btn-outline"
-            @click="showPreview = true"
-        >
-            Preview
-        </button>
-
-        <button
-            class="btn btn-primary"
-            type="submit"
-        >
-            Submit Request
-        </button>
-        </div>
-  </form>
-       <div
+    </form>
+     <div
   v-if="showPreview"
   class="modal-backdrop"
   @click.self="showPreview = false"
 >
   <div class="modal">
 
+    <!-- Modal Header -->
     <div class="modal-header">
       <div class="modal-header__title">
-        <span class="preview-icon">👁</span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+
         Form Preview
       </div>
 
@@ -123,106 +147,93 @@
       </button>
     </div>
 
+    <!-- Modal Body -->
     <div class="modal-body">
 
-      <div class="preview-head">
-        <div>
-          <p class="company-label">
-            Getpayed Technology Solutions Ltd.
-          </p>
+  <div class="preview-title-block">
 
-          <h2 class="preview-title serif">
-            Leave Request Form
-          </h2>
-        </div>
+    <p class="company-label">
+      Getpayed Technology Solutions Ltd.
+    </p>
 
-        <div class="preview-head__right">
-          <p class="mono-label tiny">
-            Request No.
-          </p>
+    <h1 class="preview-title serif">
+      Leave Request Form
+    </h1>
 
-          <code class="voucher-no">
-            LRF/2026/07/001
-          </code>
-        </div>
+  </div>
+
+  <hr class="preview-divider" />
+  
+      <div class="preview-row">
+  <span class="preview-label">Employee Name</span>
+  <span class="preview-value">{{ form.employeeName || "—" }}</span>
+</div>
+
+<div class="preview-row">
+  <span class="preview-label">Department Manager</span>
+  <span class="preview-value">{{ form.departmentManager || "—" }}</span>
+</div>
+      
+
+      <div class="preview-row">
+        <span class="preview-label">Department</span>
+        <span class="preview-value">{{ form.department || "—" }}</span>
       </div>
 
-      <div class="preview-section">
-        <h3 class="preview-section__title mono-label">
-          Employee Details
-        </h3>
-
-        <div class="preview-rows">
-          <div class="preview-row">
-            <span>Employee Name</span>
-            <span>{{ form.employeeName || "—" }}</span>
-          </div>
-
-          <div class="preview-row">
-            <span>Department</span>
-            <span>{{ form.department || "—" }}</span>
-          </div>
-        </div>
+      <div class="preview-row">
+        <span class="preview-label">Leave Type</span>
+        <span class="preview-value">{{ form.leaveType || "—" }}</span>
       </div>
 
-      <div class="preview-section">
-        <h3 class="preview-section__title mono-label">
-          Leave Details
-        </h3>
-
-        <div class="preview-rows">
-          <div class="preview-row">
-            <span>Leave Type</span>
-            <span>{{ form.leaveType || "—" }}</span>
-          </div>
-
-          <div class="preview-row">
-            <span>Start Date</span>
-            <span>{{ form.startDate || "—" }}</span>
-          </div>
-
-          <div class="preview-row">
-            <span>End Date</span>
-            <span>{{ form.endDate || "—" }}</span>
-          </div>
-
-          <div class="preview-row block-row">
-            <span>Reason</span>
-            <span>{{ form.reason || "—" }}</span>
-          </div>
-        </div>
+      <div class="preview-row">
+        <span class="preview-label">Start Date</span>
+        <span class="preview-value">{{ form.startDate || "—" }}</span>
       </div>
 
-      <div class="preview-section">
-        <h3 class="preview-section__title mono-label">
-          Supporting Documents
-        </h3>
+      <div class="preview-row">
+        <span class="preview-label">End Date</span>
+        <span class="preview-value">{{ form.endDate || "—" }}</span>
+      </div>
 
-        <div class="preview-rows">
-          <div class="preview-row">
-            <span>Attached Files</span>
+      <div class="preview-row preview-row--block">
+        <span class="preview-label">Reason</span>
+        <span class="preview-value">
+          {{ form.reason || "—" }}
+        </span>
+      </div>
 
-            <span>
-              <template v-if="attachments.length">
-                <span
-                  v-for="(file, i) in attachments"
-                  :key="i"
-                >
-                  {{ file.name }}{{ i < attachments.length - 1 ? ", " : "" }}
-                </span>
-              </template>
+      <div class="preview-row preview-row--block">
+        <span class="preview-label">Attachments</span>
 
-              <template v-else>
-                None
-              </template>
-            </span>
-          </div>
-        </div>
+        <span class="preview-value" v-if="attachments.length">
+  <ul class="preview-file-list">
+    <li
+      v-for="(file, i) in attachments"
+      :key="i"
+    >
+      <a
+        href="#"
+        class="file-link"
+        @click.prevent="openFilePreview(file)"
+      >
+        {{ file.name }}
+      </a>
+    </li>
+  </ul>
+</span>
+        <span
+          class="preview-value"
+          v-else
+        >
+          None
+        </span>
       </div>
 
     </div>
 
+    <!-- Modal Footer -->
     <div class="modal-footer">
+
       <button
         class="btn btn-outline"
         @click="showPreview = false"
@@ -234,31 +245,41 @@
         class="btn btn-primary"
         @click="submitLeave"
       >
-        Confirm &amp; Submit
+        Submit Form
       </button>
-    </div>
+      </div>
 
+    </div>
   </div>
 </div>
+ 
+        <FilePreview
+        :show="showFilePreview"
+        :file="previewFile"
+        @close="showFilePreview = false"
+        />
 </template>
 
 <script setup>
+import FilePreview from '../components/FilePreview.vue'
 import { reactive } from 'vue'
 import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import { ref } from 'vue'
 
 const showPreview = ref(false)
+const showFilePreview = ref(false)
+const previewFile = ref(null)
 const form = reactive({
   employeeName: '',
-  employeeId: '',
+  departmentManager: "",
   department: '',
   leaveType: '',
   startDate: '',
   endDate: '',
   reason: '',
 })
-const attachments = reactive([])
+const attachments = ref([])
 
 const leaveOptions = [
   { label: 'Annual Leave', value: 'annual' },
@@ -276,6 +297,11 @@ const departmentOptions = [
   { label: 'Marketing', value: 'Marketing' },
 ]
 
+function openFilePreview(file) {
+  previewFile.value = file
+  showFilePreview.value = true
+}
+
 function submitLeave() {
   console.log(form)
   console.log(attachments)
@@ -291,61 +317,54 @@ function submitLeave() {
 
 .page-header {
   width: 750px;
-  margin: 20px auto 28px;
-}
-
-.page-header__left {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+  margin: 20px auto 20px;
 }
 
 .employee-name-row {
   grid-column: 1 / -1;   
   width: 100%;            
 }
-.header-text {
-  padding-top: 4px;
+
+.page-header__left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
 }
 
-.header-icon {
-  width: 46px;
-  height: 46px;
-  background: #203864;
-  border-radius: 12px;
 
+.header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--primary-fg);
   display: flex;
   align-items: center;
   justify-content: center;
-
-  color: #fff;
   flex-shrink: 0;
-
-  margin-top: -4px;
 }
 
 .company-label {
   font-size: 11px;
-  letter-spacing: 0.22em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #8b7355;
-
-  margin-top: 6px;
-  margin-bottom: 4px;
+  color: var(--muted-fg);
+  margin: 0 0 4px 0;
 }
 
 .serif {
-  font-family: Georgia, serif;
-  font-size: 30px;
+  font-family: var(--font-serif);
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.05;
-  margin: 2px 0 0;
+  line-height: 1.2;
+  margin: 0;
 }
 
 .page-subtitle {
-  margin-top: 6px;
-  color: #6b7280;
-  font-size: 15px;
+  margin-top: 8px;
+  color: var(--muted-fg);
+  font-size: 14px;
 }
 
 
@@ -359,6 +378,15 @@ function submitLeave() {
   box-sizing: border-box;
 }
 
+.card {
+  margin-bottom: 40px;
+}
+
+.content {
+  max-width: 750px;
+  margin: 0 auto;
+  padding-top: 24px;
+}
 
 .form-grid {
   display: grid;
@@ -406,106 +434,103 @@ function submitLeave() {
 }
 
 .modal {
-  max-width: 760px;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
   width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fff;
+  max-width: 640px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  margin: 0 auto;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 28px;
-  border-bottom: 1px solid #eee;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
 }
 
 .modal-header__title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: #1a2b4c;
+  color: var(--primary);
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.modal-close:hover {
+  background: var(--muted);
+  color: var(--fg);
 }
 
 .modal-body {
-  padding: 28px;
-  max-height: 70vh;
-  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* ===== Header ===== */
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
 
+/* ── Preview header ─────────────────────────────────────────── */
 .preview-head {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  padding-bottom: 18px;
-  border-bottom: 1px solid #ececec;
+  justify-content: space-between;
+  padding-bottom: 24px;
   margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.preview-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 4px;
 }
 
 .preview-head__right {
   text-align: right;
 }
 
-.company-label {
-  font-size: 11px;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: #8b7355;
-  margin: 0 0 6px;
-}
-
-.preview-title {
-  margin: 0;
-  color: #1a2b4c;
-}
-
-.serif {
-  font-family: Georgia, serif;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.mono-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: .18em;
-  color: #8a92a0;
-}
-
-.tiny {
-  margin-bottom: 6px;
-}
-
-.voucher-no {
-  background: #f4f4f4;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #1a2b4c;
-}
-
-/* ===== Sections ===== */
-
+/* ── Preview sections ───────────────────────────────────────── */
 .preview-section {
-  margin-top: 24px;
-}
-
-.preview-section:first-of-type {
-  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 0;
 }
 
 .preview-section__title {
   padding-bottom: 8px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--border);
 }
-
-/* ===== Rows ===== */
 
 .preview-rows {
   display: flex;
@@ -515,39 +540,49 @@ function submitLeave() {
 
 .preview-row {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: 24px;
+  gap: 20px;
+  padding: 4px 0;
   font-size: 14px;
+  line-height: 1.6;
 }
 
-.preview-row span:first-child {
-  color: #8a92a0;
+.preview-row > span:first-child {
+  flex-shrink: 0;
+  width: 160px;
+  color: var(--muted-fg);
+  font-size: 11px;              /* same as company label */
   font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;    /* makes them uppercase */
 }
 
-.preview-row span:last-child {
-  color: #1a2b4c;
-  text-align: right;
+.preview-row > span:last-child {
+  flex: 1;
+  color: var(--fg);
+  word-break: break-word;
 }
 
-.block-row {
+.preview-row.block-row {
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
-.block-row span:last-child {
-  text-align: left;
+.preview-row.block-row > span:first-child {
+  width: auto;
 }
 
-/* ===== Footer ===== */
-
-.modal-footer {
+.button-group {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 18px 28px;
-  border-top: 1px solid #eee;
+  margin-top: 28px;
 }
 
+.review-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 14px;
+  font-size: 15px;
+  margin-top: 4px;
+}
 </style>
