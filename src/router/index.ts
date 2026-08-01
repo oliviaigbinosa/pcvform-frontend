@@ -4,6 +4,7 @@ import Settings from '../settings.vue'
 import Signup from '../signupform.vue'
 import Voucher from '../voucher.vue'
 import VoucherForm from '../voucherform.vue'
+import LeaveRequest from '../leaverequest.vue'
 import { isAdmin, isLoggedIn } from '../stores/appState'
 
 const router = createRouter({
@@ -15,6 +16,7 @@ const router = createRouter({
     { path: '/vouchers', name: 'vouchers', component: Voucher },
     { path: '/settings', name: 'settings', component: Settings },
     { path: '/admin', name: 'admin', component: Admin },
+    { path: '/leave-request', name: 'leave-request', component: LeaveRequest },
   ],
 })
 

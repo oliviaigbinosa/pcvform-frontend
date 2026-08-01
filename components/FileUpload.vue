@@ -38,16 +38,16 @@
           <polyline points="14 2 14 8 20 8" />
         </svg>
         <a
-         
           href="#"
           @click.prevent="emit('preview', file)"
-         class="file-name">{{ file.name }}</a>
+          class="file-name"
+        >{{ file.name }}</a>
         <button
           type="button"
-         
           @click="removeFile(i)"
           aria-label="Remove"
-         class="file-remove">
+          class="file-remove"
+        >
           ✕
         </button>
       </li>
@@ -57,6 +57,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 const props = defineProps({
   files: { type: Array, default: () => [] },
   label: { type: String, default: '' },
@@ -66,10 +68,7 @@ const props = defineProps({
   accept: { type: String, default: '' }
 })
 
-import { computed, ref } from 'vue'
-
 const fileInput = ref(null)
-
 const emit = defineEmits(['update:files', 'preview'])
 
 function readFileAsDataURL(file) {
@@ -83,19 +82,38 @@ function readFileAsDataURL(file) {
 
 async function handleFiles(e) {
   const incoming = Array.from(e.target.files ?? [])
-  const newFiles = await Promise.all(
-    incoming.map(async (file) => {
-      const data = await readFileAsDataURL(file)
-      return {
-        name: file.name,
-        type: file.type || 'application/octet-stream',
-        size: file.size,
-        data,
-      }
-    }),
+  if (!incoming.length) return
+
+  const pending = incoming.map((file) => ({
+    id: crypto.randomUUID(),
+    name: file.name,
+    type: file.type || "application/octet-stream",
+    size: file.size,
+    data: null,
+  }))
+
+  emit("update:files", [...props.files, ...pending])
+
+  e.target.value = ""
+
+  const ready = await Promise.all(
+    incoming.map(async (file, index) => ({
+      ...pending[index],
+      data: await readFileAsDataURL(file),
+    }))
   )
-  emit('update:files', [...props.files, ...newFiles])
-  e.target.value = ''
+
+  const updated = props.files.map((file) => {
+    const replacement = ready.find((r) => r.id === file.id)
+    return replacement || file
+  })
+
+  emit("update:files", [
+    ...updated,
+    ...ready.filter(
+      (r) => !updated.some((u) => u.id === r.id)
+    ),
+  ])
 }
 
 function removeFile(i) {
@@ -103,6 +121,4 @@ function removeFile(i) {
   next.splice(i, 1)
   emit('update:files', next)
 }
-
 </script>
-

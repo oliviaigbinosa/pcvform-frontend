@@ -100,6 +100,30 @@
           </svg>
           Vouchers
         </router-link>
+
+        <router-link
+  :to="{ name: 'leave-request' }"
+  @click="sidebarOpen = false"
+  :class="['sidebar__nav-item', { 'active': route.name === 'leave-request' }]"
+>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path d="M8 6h13" />
+    <path d="M8 12h13" />
+    <path d="M8 18h13" />
+    <path d="M3 6h.01" />
+    <path d="M3 12h.01" />
+    <path d="M3 18h.01" />
+  </svg>
+
+  Leave Request
+</router-link>
         <router-link
           v-if="isAdmin"
          

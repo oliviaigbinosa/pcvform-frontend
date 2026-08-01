@@ -636,7 +636,8 @@ textarea {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding-bottom: 16px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -644,7 +645,7 @@ textarea {
   font-family: var(--font-serif);
   font-size: 20px;
   font-weight: 700;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .preview-head__right {
@@ -655,30 +656,33 @@ textarea {
 .preview-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  padding: 12px 0;
 }
 
 .preview-section__title {
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
 
 .preview-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
 .preview-row {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  font-size: 13px;
+  gap: 20px;
+  padding: 4px 0;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .preview-row > span:first-child {
   flex-shrink: 0;
-  width: 140px;
+  width: 160px;
   color: var(--muted-fg);
 }
 
@@ -690,7 +694,7 @@ textarea {
 
 .preview-row.block-row {
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .preview-row.block-row > span:first-child {
