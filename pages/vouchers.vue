@@ -180,9 +180,7 @@
         </button>
       </nav>
 
-      <div v-if="loadingVouchers" class="vouchers-loading">
-        Loading vouchers…
-      </div>
+      <VoucherTableSkeleton v-if="loadingVouchers" />
 
       <div v-else-if="!displayedVouchers.length" class="vouchers-empty card">
         <svg
@@ -302,9 +300,10 @@
 </template>
 
 <script setup>
-import { computed, ref, reactive } from 'vue'
+import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import FilePreview from '../components/FilePreview.vue'
+import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 import { allVouchers, loadingVouchers, userEmail, userRole, API_BASE, updateVoucherStatus } from '~/composables/appState'
 
 const router = useRouter()
@@ -414,6 +413,15 @@ function openFilePreview(doc) {
 }
 
 const activeTab = ref('sent')
+
+onMounted(() => {
+  const saved = localStorage.getItem('pcv_vouchers_tab')
+  if (saved === 'sent' || saved === 'received') activeTab.value = saved
+})
+
+watch(activeTab, (value) => {
+  localStorage.setItem('pcv_vouchers_tab', value)
+})
 const sentVouchers = computed(() =>
   allVouchers.value.filter((voucher) => voucher.submittedBy === userEmail.value),
 )

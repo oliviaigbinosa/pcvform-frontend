@@ -163,11 +163,7 @@
       </div>
 
       <template v-else>
-        <div v-if="loadingVouchers" class="vouchers-loading">
-          Loading vouchers…
-        </div>
-        <template v-else>
-          <div class="admin-filters card">
+        <div class="admin-filters card">
           <div v-if="isSuperAdmin" ref="deptDropdownRef" class="field admin-filter-field custom-select">
             <label class="mono-label">Filter by Department</label>
             <button
@@ -309,7 +305,9 @@
           </button>
         </div>
 
-        <div v-if="!filteredAdminVouchers.length" class="vouchers-empty card">
+        <VoucherTableSkeleton v-if="loadingVouchers" :columns="8" />
+        <template v-else>
+          <div v-if="!filteredAdminVouchers.length" class="vouchers-empty card">
           <svg
             width="40"
             height="40"
@@ -601,7 +599,8 @@
         </button>
       </nav>
 
-      <div v-if="!displayedOnboardingUsers.length" class="vouchers-empty card">
+      <VoucherTableSkeleton v-if="loadingUsers" :columns="6" />
+      <div v-else-if="!displayedOnboardingUsers.length" class="vouchers-empty card">
         <svg
           width="40"
           height="40"
@@ -818,8 +817,9 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import FilePreview from '../components/FilePreview.vue'
+import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 import {
   allVouchers,
   loadingVouchers,
@@ -835,7 +835,15 @@ import {
 } from '~/composables/appState'
 
 const activeTab = ref('vouchers')
+
+watch(activeTab, (value) => {
+  localStorage.setItem('pcv_admin_tab', value)
+})
 const onboardingListTab = ref('users')
+
+watch(onboardingListTab, (value) => {
+  localStorage.setItem('pcv_onboarding_list_tab', value)
+})
 const selectedVoucher = ref(null)
 const addingUser = ref(false)
 const removingUserId = ref('')
@@ -878,6 +886,10 @@ const onboardForm = reactive({
 const onboardErrors = reactive({})
 
 onMounted(async () => {
+  const saved = localStorage.getItem('pcv_admin_tab')
+  if (saved === 'vouchers' || saved === 'onboarding') activeTab.value = saved
+  const savedListTab = localStorage.getItem('pcv_onboarding_list_tab')
+  if (savedListTab === 'users' || savedListTab === 'admins') onboardingListTab.value = savedListTab
   loadingUsers.value = true
   try {
     await fetchOnboardingUsers()

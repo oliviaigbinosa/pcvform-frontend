@@ -1537,7 +1537,7 @@ textarea {
 
 .dashboard-tabs__tab.active {
   background: var(--card);
-  color: var(--fg);
+  color: var(--accent);
   box-shadow: 0 1px 3px rgba(26, 22, 18, 0.08);
 }
 
