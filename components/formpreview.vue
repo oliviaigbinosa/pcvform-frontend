@@ -131,7 +131,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { API_BASE } from '@/stores/appState'
+import { API_BASE } from '~/composables/appState'
 import FilePreview from './FilePreview.vue'
 
 const props = defineProps({

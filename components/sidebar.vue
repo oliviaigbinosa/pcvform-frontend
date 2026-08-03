@@ -36,7 +36,7 @@
       <nav class="sidebar__nav">
         <div class="sidebar__nav-head">
           <p class="sidebar__nav-group">Navigation</p>
-          <router-link
+          <NuxtLink
            
            
             :to="{ name: 'settings' }"
@@ -56,9 +56,9 @@
                 d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
               />
             </svg>
-          </router-link>
+          </NuxtLink>
         </div>
-        <router-link
+        <NuxtLink
          
          
           :to="{ name: 'form' }"
@@ -78,8 +78,8 @@
             <line x1="16" y1="17" x2="8" y2="17" />
           </svg>
           Form
-        </router-link>
-        <router-link
+        </NuxtLink>
+        <NuxtLink
          
          
           :to="{ name: 'vouchers' }"
@@ -99,8 +99,8 @@
             <line x1="8" y1="15" x2="12" y2="15" />
           </svg>
           Vouchers
-        </router-link>
-        <router-link
+        </NuxtLink>
+        <NuxtLink
           v-if="isAdmin"
          
          
@@ -121,7 +121,7 @@
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
           Admin Panel
-        </router-link>
+        </NuxtLink>
       </nav>
 
       <div class="sidebar__footer">
@@ -165,7 +165,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAdmin, logoutUser, userEmail, userRole } from '@/stores/appState'
+import { isAdmin, logoutUser, userEmail, userRole } from '~/composables/appState'
 
 const route = useRoute()
 const router = useRouter()

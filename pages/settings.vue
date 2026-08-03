@@ -174,7 +174,7 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { changePassword, userEmail } from './stores/appState'
+import { changePassword, userEmail } from '~/composables/appState'
 
 const saving = ref(false)
 const successMessage = ref('')

@@ -305,7 +305,7 @@
 import { computed, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import FilePreview from '../components/FilePreview.vue'
-import { allVouchers, loadingVouchers, userEmail, userRole, API_BASE, updateVoucherStatus } from './stores/appState'
+import { allVouchers, loadingVouchers, userEmail, userRole, API_BASE, updateVoucherStatus } from '~/composables/appState'
 
 const router = useRouter()
 const selectedVoucher = ref(null)

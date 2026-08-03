@@ -832,7 +832,7 @@ import {
   userRole,
   userDepartment,
   sendInviteEmail,
-} from './stores/appState'
+} from '~/composables/appState'
 
 const activeTab = ref('vouchers')
 const onboardingListTab = ref('users')

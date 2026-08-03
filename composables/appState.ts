@@ -2,14 +2,22 @@ import { computed, ref } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
-const userEmail = ref(sessionStorage.getItem('pcv_user') || '')
-const userRole = ref(sessionStorage.getItem('pcv_role') || '')
-const userDepartment = ref(localStorage.getItem('pcv_department') || '')
-const userCreatedBy = ref(localStorage.getItem('pcv_createdBy') || '')
-const isLoggedIn = ref(Boolean(userEmail.value))
+const userEmail = ref('')
+const userRole = ref('')
+const userDepartment = ref('')
+const userCreatedBy = ref('')
+const isLoggedIn = ref(false)
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const allVouchers = ref<any[]>([])
 const loadingVouchers = ref(true)
+
+if (typeof window !== 'undefined') {
+  userEmail.value = sessionStorage.getItem('pcv_user') || ''
+  userRole.value = sessionStorage.getItem('pcv_role') || ''
+  userDepartment.value = localStorage.getItem('pcv_department') || ''
+  userCreatedBy.value = localStorage.getItem('pcv_createdBy') || ''
+  isLoggedIn.value = Boolean(userEmail.value)
+}
 
 function loginUser(email: string, role = 'user', department = '', createdBy = '') {
   userEmail.value = email

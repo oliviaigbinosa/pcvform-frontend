@@ -96,7 +96,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FormField from '../components/FormField.vue'
-import { API_BASE, isLoggedIn, loginUser } from './stores/appState'
+import { API_BASE, isLoggedIn, loginUser } from '~/composables/appState'
 
 const router = useRouter()
 
