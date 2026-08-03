@@ -261,11 +261,7 @@
 </template>
 
 <script setup>
-import FilePreview from '../components/FilePreview.vue'
-import { reactive } from 'vue'
-import FormField from '../components/FormField.vue'
-import FileUpload from '../components/FileUpload.vue'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 
 const showPreview = ref(false)
 const showFilePreview = ref(false)
