@@ -77,7 +77,7 @@
             <line x1="16" y1="13" x2="8" y2="13" />
             <line x1="16" y1="17" x2="8" y2="17" />
           </svg>
-          Form
+          Petty Cash Form
         </NuxtLink>
         <NuxtLink
          

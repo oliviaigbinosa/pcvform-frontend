@@ -1047,7 +1047,7 @@ textarea {
 
 .sidebar__nav-item.active {
   background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  color: #d4ac0d;
 }
 
 .sidebar__nav-item.active::before {
@@ -1537,7 +1537,7 @@ textarea {
 
 .dashboard-tabs__tab.active {
   background: var(--card);
-  color: var(--accent);
+  color: var(--fg);
   box-shadow: 0 1px 3px rgba(26, 22, 18, 0.08);
 }
 

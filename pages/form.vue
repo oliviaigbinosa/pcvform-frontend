@@ -32,7 +32,7 @@
           </div>
           <div>
             <p class="company-label">Getpayed Technology Solutions Ltd.</p>
-            <h1 class="serif">Petty Cash Voucher</h1>
+            <h1 class="serif">Petty Cash Voucher Form</h1>
           </div>
         </div>
         <div class="pcv-header__right">
