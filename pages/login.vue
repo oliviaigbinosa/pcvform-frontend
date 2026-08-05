@@ -2,17 +2,7 @@
   <div class="login-wrap">
     <div class="login-card">
       <div class="login-card__logo">
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-        </svg>
+        <img src="/logo.svg" alt="Getpayed logo" width="40" height="40" />
       </div>
       <p class="login-card__company">Getpayed Technology Solutions Ltd.</p>
       <h1 class="login-card__title serif">Sign in to your account</h1>

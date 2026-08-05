@@ -8,8 +8,11 @@ const userDepartment = ref('')
 const userCreatedBy = ref('')
 const isLoggedIn = ref(false)
 const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
+const onboardDepts = ref<string[]>(['firstDep', 'secondDep', 'thirdDep', 'fourthDep', 'fifthDep'])
 const allVouchers = ref<any[]>([])
 const loadingVouchers = ref(true)
+const allLeaveRequests = ref<any[]>([])
+const loadingLeaveRequests = ref(true)
 
 if (typeof window !== 'undefined') {
   userEmail.value = sessionStorage.getItem('pcv_user') || ''
@@ -71,6 +74,34 @@ async function addVoucher(entry: Record<string, unknown>) {
     throw new Error(data.error || 'Failed to save voucher')
   }
   allVouchers.value = [data, ...allVouchers.value]
+}
+
+async function fetchLeaveRequests() {
+  loadingLeaveRequests.value = true
+  try {
+    const headers: Record<string, string> = {}
+    if (userEmail.value) headers['x-admin-email'] = userEmail.value
+    const res = await fetch(`${API_BASE}/api/leave-requests`, { headers })
+    if (!res.ok) {
+      throw new Error('Failed to fetch leave requests')
+    }
+    allLeaveRequests.value = await res.json()
+  } finally {
+    loadingLeaveRequests.value = false
+  }
+}
+
+async function addLeaveRequest(entry: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/api/leave-requests`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to save leave request')
+  }
+  allLeaveRequests.value = [data, ...allLeaveRequests.value]
 }
 
 async function updateVoucherStatus(id: string, status: string) {
@@ -181,18 +212,23 @@ async function fetchCurrentUser() {
 }
 
 export {
+  addLeaveRequest,
   addOnboardingUser,
-  API_BASE,
   addVoucher,
+  allLeaveRequests,
   allVouchers,
+  API_BASE,
   changePassword,
+  fetchLeaveRequests,
   fetchOnboardingUsers,
   fetchVouchers,
   isAdmin,
-  loadingVouchers,
   isLoggedIn,
+  loadingLeaveRequests,
+  loadingVouchers,
   loginUser,
   logoutUser,
+  onboardDepts,
   onboardingUsers,
   removeOnboardingUser,
   sendInviteEmail,

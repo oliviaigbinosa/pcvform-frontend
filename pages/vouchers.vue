@@ -479,4 +479,9 @@ const displayedVouchers = computed(() =>
   font-weight: 700;
   letter-spacing: -0.04em;
 }
+
+.approve-actions-bar .btn {
+  padding: 11px 36px;
+  font-size: 15px;
+}
 </style>

@@ -655,7 +655,7 @@
                 <button
                   type="button"
                   class="btn btn-sm btn-destructive"
-                  style="padding: 5px 10px; font-size: 12px;"
+                  style="padding: 4px 8px; font-size: 11px;"
                   @click="promptDeleteUser(user)"
                   :disabled="removingUserId === user.id"
                 >
@@ -824,6 +824,7 @@ import {
   allVouchers,
   loadingVouchers,
   onboardingUsers,
+  onboardDepts,
   addOnboardingUser,
   removeOnboardingUser,
   fetchOnboardingUsers,
@@ -936,7 +937,6 @@ const adminBaseVouchers = computed(() => {
 const adminDepts = computed(() =>
   [...new Set(adminBaseVouchers.value.map((voucher) => voucher.department).filter(Boolean))].sort(),
 )
-const onboardDepts = ref(['firstDep', 'secondDep', 'thirdDep', 'fourthDep', 'fifthDep'])
 const adminUsers = computed(() =>
   [...new Set(adminBaseVouchers.value.map((voucher) => voucher.submittedBy).filter(Boolean))].sort(),
 )
