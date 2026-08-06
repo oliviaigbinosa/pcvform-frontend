@@ -484,4 +484,15 @@ const displayedVouchers = computed(() =>
   padding: 11px 36px;
   font-size: 15px;
 }
+
+.page-wrap > .dashboard-tabs {
+  width: 800px !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page-wrap > .dashboard-tabs .dashboard-tabs__tab {
+  flex: 1;
+  justify-content: center;
+}
 </style>

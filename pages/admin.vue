@@ -1359,4 +1359,15 @@ async function handleRemoveUser(id) {
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
   color: var(--destructive);
 }
+
+.page-wrap > .dashboard-tabs {
+  width: 800px !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page-wrap > .dashboard-tabs .dashboard-tabs__tab {
+  flex: 1;
+  justify-content: center;
+}
 </style>

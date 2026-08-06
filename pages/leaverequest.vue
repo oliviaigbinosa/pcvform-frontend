@@ -5,7 +5,7 @@
 
       <div class="page-header__left">
 
-        <div class="header-icon">
+        <div v-if="activeTab !== 'requests'" class="header-icon">
           <svg
               width="20"
               height="20"
@@ -21,13 +21,17 @@
         </div>
 
         <div class="header-text">
-          <p class="company-label">
+          <p v-if="activeTab !== 'requests'" class="company-label">
             Getpayed Technology Solutions Ltd.
           </p>
 
           <h1 class="serif">
-            Leave Request Form
+            {{ activeTab === 'requests' ? 'Leave Requests' : 'Leave Request Form' }}
           </h1>
+
+          <p v-if="activeTab === 'requests'" class="vouchers-sub">
+            {{ displayedLeaveRequests.length }} leave request{{ displayedLeaveRequests.length !== 1 ? 's' : '' }} submitted by users
+          </p>
         </div>
 
       </div>
@@ -583,7 +587,7 @@ async function submitLeave() {
 
 <style scoped>
 .page {
-  max-width: 950px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 40px 0;
 }
@@ -647,9 +651,28 @@ async function submitLeave() {
 }
 
 .content {
-  max-width: 750px;
+  max-width: 1000px;
   margin: 0 auto;
   padding-top: 24px;
+}
+
+.page-header {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.dashboard-tabs {
+  width: 800px !important;
+  margin-top: 24px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dashboard-tabs .dashboard-tabs__tab {
+  flex: 1;
+  justify-content: center;
 }
 
 .form-grid {
