@@ -104,6 +104,24 @@ async function addLeaveRequest(entry: Record<string, unknown>) {
   allLeaveRequests.value = [data, ...allLeaveRequests.value]
 }
 
+async function updateLeaveRequestStatus(id: string, status: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (userEmail.value) headers['x-user-email'] = userEmail.value
+  const res = await fetch(`${API_BASE}/api/leave-requests/${encodeURIComponent(id)}/status`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ status }),
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update leave request status')
+  }
+  const index = allLeaveRequests.value.findIndex((l) => l.id === id)
+  if (index !== -1) {
+    allLeaveRequests.value[index] = data
+  }
+}
+
 async function updateVoucherStatus(id: string, status: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (userEmail.value) headers['x-user-email'] = userEmail.value
@@ -233,6 +251,7 @@ export {
   removeOnboardingUser,
   sendInviteEmail,
   updateVoucherStatus,
+  updateLeaveRequestStatus,
   fetchCurrentUser,
   userCreatedBy,
   userDepartment,

@@ -44,7 +44,7 @@
         class="dashboard-tabs__tab"
         :class="{ active: activeTab === 'form' }"
         :aria-selected="activeTab === 'form'"
-        @click="activeTab = 'form'"
+        @click="setLeaveTab('form')"
       >
         Form
       </button>
@@ -53,7 +53,7 @@
         class="dashboard-tabs__tab"
         :class="{ active: activeTab === 'requests' }"
         :aria-selected="activeTab === 'requests'"
-        @click="activeTab = 'requests'"
+        @click="setLeaveTab('requests')"
       >
         Leave Requests
       </button>
@@ -347,6 +347,7 @@
       </button>
 
       <button
+        :disabled="submitting"
         class="btn btn-primary"
         @click="submitLeave"
       >
@@ -357,34 +358,40 @@
     </div>
   </div>
  
-        <FilePreview
-        :show="showFilePreview"
-        :file="previewFile"
-        @close="showFilePreview = false"
-        />
     </div>
 
-    <div v-if="isAdmin && activeTab === 'requests'" class="card requests-card">
-      <h2 class="serif">Leave Requests</h2>
-      <p class="vouchers-sub">{{ displayedLeaveRequests.length }} leave request{{ displayedLeaveRequests.length !== 1 ? 's' : '' }} submitted by your team</p>
+    <div v-show="isAdmin && activeTab === 'requests'">
+      <VoucherTableSkeleton v-if="loadingLeaveRequests" :columns="7" />
 
-      <VoucherTableSkeleton v-if="loadingLeaveRequests" />
-
-      <div v-else-if="!displayedLeaveRequests.length" class="vouchers-empty card">
-        <p class="vouchers-empty__title">No leave requests</p>
-        <p class="vouchers-empty__sub">Leave requests from users you onboarded will appear here.</p>
+      <template v-else>
+      <div class="admin-filters card">
+        <div class="filter-row">
+          <input
+            v-model="filterText"
+            type="text"
+            class="filter-input"
+            placeholder="Filter by user, status"
+          />
+          <button class="btn btn-primary" @click="clearFilter">Clear Filters</button>
+        </div>
       </div>
 
-      <div v-else class="vouchers-table-wrap card">
-        <table class="vouchers-table">
+      <div class="vouchers-table-wrap card">
+
+        <div v-if="!displayedLeaveRequests.length" class="vouchers-empty">
+          <p class="vouchers-empty__title">No leave requests</p>
+          <p class="vouchers-empty__sub">Leave requests from users you onboarded will appear here.</p>
+        </div>
+
+        <table v-else class="vouchers-table">
           <thead>
             <tr>
               <th>Date</th>
               <th>Employee</th>
-              <th>Department</th>
+              <th>Leave Period</th>
               <th>Leave Type</th>
-              <th>Start</th>
-              <th>End</th>
+              <th class="reason-col">Reason</th>
+              <th>Attachments</th>
               <th class="text-center">Status</th>
             </tr>
           </thead>
@@ -396,25 +403,103 @@
             >
               <td class="text-muted">{{ new Date(leave.createdAt).toLocaleDateString() }}</td>
               <td class="font-medium">{{ leave.employeeName }}</td>
-              <td class="text-muted">{{ leave.department }}</td>
+              <td class="text-muted">{{ formatLeavePeriod(leave) }}</td>
               <td>{{ leave.leaveType }}</td>
-              <td class="text-muted">{{ leave.startDate }}</td>
-              <td class="text-muted">{{ leave.endDate }}</td>
+              <td class="reason-cell">
+                <span
+                  class="reason-text"
+                  :class="{ expanded: expandedReasons[leave.id] }"
+                  @click.stop="toggleReason(leave.id)"
+                >
+                  {{ leave.reason || '—' }}
+                </span>
+              </td>
+              <td class="attachments-cell">
+                <template v-if="leave.attachments && leave.attachments.length">
+                  <span v-for="(file, i) in leave.attachments" :key="i">
+                    <a
+                      href="#"
+                      class="file-link"
+                      @click.prevent="openFilePreview(file)"
+                    >
+                      {{ typeof file === 'string' ? file : (file.name || '—') }}
+                    </a>{{ i < leave.attachments.length - 1 ? ', ' : '' }}
+                  </span>
+                </template>
+                <template v-else>—</template>
+              </td>
               <td class="text-center">
-                <span class="status-badge" :class="'status-badge--' + (leave.status?.toLowerCase() || 'pending')">
-                  {{ leave.status || 'Pending' }}
+                <span class="status-wrap">
+                  <span class="status-badge" :class="'status-badge--' + (leave.status?.toLowerCase() || 'pending')">
+                    {{ leave.status || 'Pending' }}
+                  </span>
+                  <button
+                    v-if="(leave.status || 'Pending').toLowerCase() === 'pending'"
+                    type="button"
+                    class="info-btn"
+                    title="Click to approve/decline"
+                    aria-label="Approve or decline"
+                    @click.stop="openActionModal(leave)"
+                  >
+                    i
+                  </button>
                 </span>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+      </template>
     </div>
+
+  <div v-if="showActionModal" class="modal-backdrop" @click.self="showActionModal = false">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Approve or decline leave" style="max-width: 640px;">
+      <div class="modal-header" style="padding: 8px 24px 4px;">
+        <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">Approve or decline?</div>
+        <button class="modal-close" @click="showActionModal = false" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 24px;">
+        <p style="font-size: 16px; color: var(--muted-fg); margin: 6px 0 0;">Choose an action for this leave request.</p>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+          <button class="btn btn-approve" style="border-radius: 9999px; padding: 9px 28px; font-size: 15px;" @click="chooseAction('Approved')">Approve</button>
+          <button class="btn" :class="isSuperAdmin ? 'btn-decline-subtle' : 'btn-decline'" style="border-radius: 9999px; padding: 9px 28px; font-size: 15px;" @click="chooseAction('Declined')">Decline</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showConfirmModal" class="modal-backdrop" @click.self="showConfirmModal = false">
+    <div class="modal" role="dialog" aria-modal="true" :aria-label="(pendingAction === 'Approved' ? 'Approve' : 'Decline') + ' confirmation'" style="max-width: 640px;">
+      <div class="modal-header" style="padding: 8px 24px 4px;">
+        <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">{{ pendingAction === 'Approved' ? 'Approve leave?' : 'Decline leave?' }}</div>
+        <button class="modal-close" @click="showConfirmModal = false" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">
+          Are you sure you want to {{ pendingAction === 'Approved' ? 'approve' : 'decline' }} this leave request?
+          <span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">This action cannot be undone.</span>
+        </p>
+      </div>
+      <div class="modal-footer" style="border-top: none;">
+        <button class="btn btn-outline" style="border-radius: 9999px;" @click="cancelConfirm">Cancel</button>
+        <button class="btn" :class="pendingAction === 'Approved' ? 'btn-approve' : 'btn-decline'" :disabled="processing" style="border-radius: 9999px;" @click="confirmStatus">
+          {{ processing && processingAction === pendingAction ? (pendingAction === 'Approved' ? 'Approving…' : 'Declining…') : (pendingAction === 'Approved' ? 'Yes, Approve' : 'Yes, Decline') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <FilePreview
+    :show="showFilePreview"
+    :file="previewFile"
+    @close="showFilePreview = false"
+  />
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useCookie } from '#app'
 import {
   isAdmin,
   userCreatedBy,
@@ -424,6 +509,7 @@ import {
   fetchOnboardingUsers,
   fetchLeaveRequests,
   addLeaveRequest,
+  updateLeaveRequestStatus,
   onboardDepts,
   onboardingUsers,
   allLeaveRequests,
@@ -447,14 +533,80 @@ const form = reactive({
 const attachments = ref([])
 const errors = reactive({})
 
-const activeTab = ref('form')
+const activeTab = useCookie('pcv_leave_tab', { default: () => 'form' })
+const expandedReasons = reactive({})
+const filterText = ref('')
+const selectedLeave = ref(null)
+const showActionModal = ref(false)
+const showConfirmModal = ref(false)
+const pendingAction = ref('')
+const processing = ref(false)
+const processingAction = ref('')
+
+function setLeaveTab(tab) {
+  activeTab.value = tab
+}
+
+function toggleReason(id) {
+  expandedReasons[id] = !expandedReasons[id]
+}
+
+function clearFilter() {
+  filterText.value = ''
+}
+
+function openActionModal(leave) {
+  selectedLeave.value = leave
+  showActionModal.value = true
+}
+
+function chooseAction(action) {
+  pendingAction.value = action
+  showActionModal.value = false
+  showConfirmModal.value = true
+}
+
+function cancelConfirm() {
+  showConfirmModal.value = false
+  showActionModal.value = true
+}
+
+async function confirmStatus() {
+  if (processing.value || !selectedLeave.value || !pendingAction.value) return
+  processing.value = true
+  processingAction.value = pendingAction.value
+  try {
+    await updateLeaveRequestStatus(selectedLeave.value.id, pendingAction.value)
+  } catch (err) {
+    console.error(err)
+    alert(err.message || 'Failed to update leave request status')
+  } finally {
+    processing.value = false
+    processingAction.value = ''
+  }
+  showConfirmModal.value = false
+  showActionModal.value = false
+  selectedLeave.value = null
+}
+
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const onboardingUserEmails = computed(() => onboardingUsers.value.map((u) => u.email))
 const displayedLeaveRequests = computed(() => {
-  if (isSuperAdmin.value) return allLeaveRequests.value
-  return allLeaveRequests.value.filter((leave) =>
-    onboardingUserEmails.value.includes(leave.submittedBy),
-  )
+  let requests = isSuperAdmin.value
+    ? allLeaveRequests.value
+    : allLeaveRequests.value.filter((leave) =>
+        onboardingUserEmails.value.includes(leave.submittedBy),
+      )
+
+  const query = filterText.value.trim().toLowerCase()
+  if (query) {
+    requests = requests.filter((leave) =>
+      (leave.employeeName?.toLowerCase().includes(query) || false) ||
+      (leave.status?.toLowerCase().includes(query) || false),
+    )
+  }
+
+  return requests
 })
 
 function validate() {
@@ -481,11 +633,11 @@ function clearErr(key) {
 }
 
 const leaveOptions = [
-  { label: 'Annual Leave', value: 'annual' },
-  { label: 'Sick Leave', value: 'sick' },
-  { label: 'Casual Leave', value: 'casual' },
-  { label: 'Maternity Leave', value: 'maternity' },
-  { label: 'Paternity Leave', value: 'paternity' },
+  { label: 'Annual Leave', value: 'Annual' },
+  { label: 'Sick Leave', value: 'Sick' },
+  { label: 'Casual Leave', value: 'Casual' },
+  { label: 'Maternity Leave', value: 'Maternity' },
+  { label: 'Paternity Leave', value: 'Paternity' },
 ]
 
 const departmentOptions = computed(() =>
@@ -527,7 +679,7 @@ onMounted(async () => {
   try {
     if (isAdmin.value) {
       await fetchOnboardingUsers()
-      await fetchLeaveRequests()
+      if (!allLeaveRequests.value.length) await fetchLeaveRequests()
     }
   } catch {
     // ignore
@@ -535,17 +687,28 @@ onMounted(async () => {
   form.departmentManager = userCreatedBy.value || ''
   window.addEventListener('click', closeDropdowns)
 
-  const saved = localStorage.getItem('pcv_leave_tab')
-  if (saved === 'form' || saved === 'requests') activeTab.value = saved
+  if (!isAdmin.value) activeTab.value = 'form'
 })
 onBeforeUnmount(() => window.removeEventListener('click', closeDropdowns))
 
-watch(activeTab, (value) => {
-  localStorage.setItem('pcv_leave_tab', value)
-})
+
+function formatDate(value) {
+  if (!value) return ''
+  return new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+
+function formatLeavePeriod(leave) {
+  if (!leave.startDate || !leave.endDate) return '—'
+  return `${formatDate(leave.startDate)} - ${formatDate(leave.endDate)}`
+}
+
+function formatAttachments(attachments) {
+  if (!attachments || !attachments.length) return '—'
+  return attachments.map((file) => (typeof file === 'string' ? file : file.name) || '—').join(', ')
+}
 
 function openFilePreview(file) {
-  previewFile.value = file
+  previewFile.value = typeof file === 'string' ? { name: file, data: file } : file
   showFilePreview.value = true
 }
 
@@ -651,13 +814,11 @@ async function submitLeave() {
 }
 
 .content {
-  max-width: 1000px;
-  margin: 0 auto;
   padding-top: 24px;
 }
 
 .page-header {
-  max-width: 900px;
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -852,12 +1013,142 @@ async function submitLeave() {
   justify-content: flex-start;
 }
 
-.requests-card h2 {
-  font-size: 20px;
-  margin: 0 0 4px;
+.content .vouchers-table-wrap {
+  max-width: 1080px;
+  padding: 0;
+  margin-bottom: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  overflow-y: hidden;
+  border-radius: 0;
 }
 
-.requests-card .vouchers-sub {
-  margin-bottom: 24px;
+.content .vouchers-empty {
+  max-width: 1080px;
+  padding: 60px 32px;
+  margin-bottom: 0;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 0;
+}
+
+.content .vouchers-table th,
+.content .vouchers-table td {
+  border-right: 1px solid var(--border);
+}
+
+.content .vouchers-table th:last-child,
+.content .vouchers-table td:last-child {
+  border-right: none;
+}
+
+.content .vouchers-table .reason-col,
+.content .vouchers-table .reason-cell {
+  width: 30%;
+  min-width: 250px;
+}
+
+.content .vouchers-table .reason-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
+  cursor: pointer;
+  color: #000;
+}
+
+.content .vouchers-table .reason-text.expanded {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  display: block;
+}
+
+.content .vouchers-table .attachments-cell {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.content .vouchers-table__row:hover td {
+  background: transparent;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-input {
+  flex: 1 1 0%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.filter-input:focus {
+  background: var(--input-bg);
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.filter-row .btn {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  transform: translateY(-14px);
+}
+.admin-filters {
+  padding: 18px 20px;
+  margin: 0 auto 16px;
+  max-width: 1080px;
+}
+
+.status-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.info-btn {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.info-btn:hover {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+
+.admin-filters .filter-row {
+  border-bottom: none;
+  padding: 0;
+  flex: 1 1 100%;
 }
 </style>

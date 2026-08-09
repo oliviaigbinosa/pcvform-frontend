@@ -182,7 +182,12 @@ const router = useRouter()
 const sidebarOpen = ref(true)
 const showLogoutModal = ref(false)
 
-const userInitial = computed(() => (userEmail.value ? userEmail.value.charAt(0).toUpperCase() : ''))
+const userInitial = computed(() => {
+  if (!userEmail.value) return ''
+  const [local] = userEmail.value.split('@')
+  const parts = local.split(/[.\-_]+/).filter(Boolean)
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('')
+})
 
 
 function handleLogout() {

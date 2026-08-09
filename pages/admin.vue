@@ -298,7 +298,7 @@
             </div>
           </div>
           <button
-            class="btn btn-outline admin-filter-clear"
+            class="btn btn-primary admin-filter-clear"
             @click="((adminFilter.dept = ''), (adminFilter.user = ''), (adminFilter.status = ''))"
           >
             Clear Filters
@@ -1369,5 +1369,12 @@ async function handleRemoveUser(id) {
 .page-wrap > .dashboard-tabs .dashboard-tabs__tab {
   flex: 1;
   justify-content: center;
+}
+
+.admin-filter-clear {
+  height: 34px;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-size: 13px;
 }
 </style>
