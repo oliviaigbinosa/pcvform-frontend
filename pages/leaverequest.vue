@@ -60,7 +60,17 @@
     </nav>
 
     <div v-if="!isAdmin || activeTab === 'form'" class="leave-form-wrap">
-    <form class="card" @submit.prevent="submitLeave">
+      <div v-if="submitted" class="card success-card">
+        <div class="success-icon">✓</div>
+        <h2 class="serif">Leave Request Submitted</h2>
+        <p>Your leave request has been sent for review.</p>
+        <code class="leave-badge">{{ submittedEmployee }}</code>
+        <div class="success-actions">
+          <button v-if="isAdmin" class="btn btn-outline" @click="viewRequests">View Leave Requests</button>
+          <button class="btn btn-primary" @click="resetForm">New Leave Request</button>
+        </div>
+      </div>
+      <form v-if="!submitted" class="card" @submit.prevent="submitLeave">
 
       <div class="form-grid">
 
@@ -271,7 +281,8 @@
       </button>
     </div>
 
-    <!-- Modal Body -->
+    <!-- Modal Body/Form Preview -->
+
     <div class="modal-body">
 
   <div class="preview-head">
@@ -283,17 +294,17 @@
 
   <div class="preview-row">
     <span class="preview-label">Employee Name</span>
-    <span class="preview-value">{{ form.employeeName || '—' }}</span>
+    <span class="preview-value">{{ form.employeeName }}</span>
   </div>
 
   <div class="preview-row">
     <span class="preview-label">Department Manager</span>
-    <span class="preview-value">{{ form.departmentManager || '—' }}</span>
+    <span class="preview-value">{{ form.departmentManager }}</span>
   </div>
 
   <div class="preview-row">
     <span class="preview-label">Department</span>
-    <span class="preview-value">{{ form.department || '—' }}</span>
+    <span class="preview-value">{{ form.department }}</span>
   </div>
 
   <div class="preview-row">
@@ -303,17 +314,17 @@
 
   <div class="preview-row">
     <span class="preview-label">Start Date</span>
-    <span class="preview-value">{{ form.startDate || '—' }}</span>
+    <span class="preview-value">{{ form.startDate }}</span>
   </div>
 
   <div class="preview-row">
     <span class="preview-label">End Date</span>
-    <span class="preview-value">{{ form.endDate || '—' }}</span>
+    <span class="preview-value">{{ form.endDate }}</span>
   </div>
 
   <div class="preview-row preview-row--block">
     <span class="preview-label">Reason</span>
-    <span class="preview-value">{{ form.reason || '—' }}</span>
+    <span class="preview-value">{{ form.reason }}</span>
   </div>
 
   <div class="preview-row">
@@ -351,7 +362,7 @@
         class="btn btn-primary"
         @click="submitLeave"
       >
-        Submit Form
+        {{ submitting ? 'Submitting...' : 'Submit Form' }}
       </button>
       </div>
 
@@ -360,22 +371,23 @@
  
     </div>
 
+    <!-- Admin tab -->
     <div v-show="isAdmin && activeTab === 'requests'">
-      <VoucherTableSkeleton v-if="loadingLeaveRequests" :columns="7" />
-
-      <template v-else>
       <div class="admin-filters card">
         <div class="filter-row">
           <input
             v-model="filterText"
             type="text"
             class="filter-input"
-            placeholder="Filter by user, status"
+            placeholder="Filter by employee, status"
           />
           <button class="btn btn-primary" @click="clearFilter">Clear Filters</button>
         </div>
       </div>
 
+      <VoucherTableSkeleton v-if="loadingLeaveRequests" :columns="7" />
+
+      <template v-else>
       <div class="vouchers-table-wrap card">
 
         <div v-if="!displayedLeaveRequests.length" class="vouchers-empty">
@@ -411,7 +423,7 @@
                   :class="{ expanded: expandedReasons[leave.id] }"
                   @click.stop="toggleReason(leave.id)"
                 >
-                  {{ leave.reason || '—' }}
+                  {{ leave.reason }}
                 </span>
               </td>
               <td class="attachments-cell">
@@ -422,7 +434,7 @@
                       class="file-link"
                       @click.prevent="openFilePreview(file)"
                     >
-                      {{ typeof file === 'string' ? file : (file.name || '—') }}
+                      {{ typeof file === 'string' ? file : (file.name || '-') }}
                     </a>{{ i < leave.attachments.length - 1 ? ', ' : '' }}
                   </span>
                 </template>
@@ -441,7 +453,7 @@
                     aria-label="Approve or decline"
                     @click.stop="openActionModal(leave)"
                   >
-                    i
+                    <span class="info-icon">i</span>
                   </button>
                 </span>
               </td>
@@ -452,15 +464,16 @@
       </template>
     </div>
 
+    <!-- Approve/Decline modal -->
   <div v-if="showActionModal" class="modal-backdrop" @click.self="showActionModal = false">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Approve or decline leave" style="max-width: 640px;">
       <div class="modal-header" style="padding: 8px 24px 4px;">
         <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">Approve or decline?</div>
         <button class="modal-close" @click="showActionModal = false" aria-label="Close">✕</button>
       </div>
-      <div class="modal-body" style="padding: 16px 24px;">
+      <div class="modal-body" style="padding: 12px 24px; gap: 0;">
         <p style="font-size: 16px; color: var(--muted-fg); margin: 6px 0 0;">Choose an action for this leave request.</p>
-        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; transform: translateY(-4px);">
           <button class="btn btn-approve" style="border-radius: 9999px; padding: 9px 28px; font-size: 15px;" @click="chooseAction('Approved')">Approve</button>
           <button class="btn" :class="isSuperAdmin ? 'btn-decline-subtle' : 'btn-decline'" style="border-radius: 9999px; padding: 9px 28px; font-size: 15px;" @click="chooseAction('Declined')">Decline</button>
         </div>
@@ -521,6 +534,8 @@ const showPreview = ref(false)
 const showFilePreview = ref(false)
 const previewFile = ref(null)
 const submitting = ref(false)
+const submitted = ref(false)
+const submittedEmployee = ref('')
 const form = reactive({
   employeeName: '',
   departmentManager: userCreatedBy.value || '',
@@ -724,6 +739,13 @@ function resetForm() {
   })
   attachments.value = []
   Object.keys(errors).forEach((key) => delete errors[key])
+  submitted.value = false
+  submittedEmployee.value = ''
+}
+
+function viewRequests() {
+  activeTab.value = 'requests'
+  resetForm()
 }
 
 async function submitLeave() {
@@ -737,8 +759,8 @@ async function submitLeave() {
       submittedBy: userEmail.value,
     })
     showPreview.value = false
-    resetForm()
-    if (isAdmin.value) activeTab.value = 'requests'
+    submittedEmployee.value = form.employeeName
+    submitted.value = true
   } catch (err) {
     console.error(err)
     alert(err.message || 'Failed to submit leave request')
@@ -1014,7 +1036,7 @@ async function submitLeave() {
 }
 
 .content .vouchers-table-wrap {
-  max-width: 1080px;
+  max-width: 1040px;
   padding: 0;
   margin-bottom: 20px;
   margin-left: auto;
@@ -1024,7 +1046,7 @@ async function submitLeave() {
 }
 
 .content .vouchers-empty {
-  max-width: 1080px;
+  max-width: 1040px;
   padding: 60px 32px;
   margin-bottom: 0;
   margin-left: auto;
@@ -1056,7 +1078,7 @@ async function submitLeave() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: normal;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   cursor: pointer;
   color: #000;
 }
@@ -1114,7 +1136,7 @@ async function submitLeave() {
 .admin-filters {
   padding: 18px 20px;
   margin: 0 auto 16px;
-  max-width: 1080px;
+  max-width: 1040px;
 }
 
 .status-wrap {
@@ -1124,14 +1146,14 @@ async function submitLeave() {
 }
 
 .info-btn {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-  border: 1px solid var(--primary);
+  border: 2px solid var(--border);
   background: transparent;
-  color: var(--primary);
+  color: var(--muted-fg);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
   cursor: pointer;
   display: inline-flex;
@@ -1142,13 +1164,26 @@ async function submitLeave() {
 }
 
 .info-btn:hover {
-  background: var(--primary);
+  background: var(--muted-fg);
+  border-color: var(--muted-fg);
   color: var(--primary-fg);
+}
+
+.info-icon {
+  display: inline-block;
 }
 
 .admin-filters .filter-row {
   border-bottom: none;
   padding: 0;
   flex: 1 1 100%;
+}
+
+.leave-badge {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+  display: block;
+  margin: 8px 0 24px;
 }
 </style>
