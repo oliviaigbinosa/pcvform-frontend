@@ -520,13 +520,13 @@ textarea {
 /* ── Success card ───────────────────────────────────────────── */
 .success-card {
   max-width: 440px;
-  margin: 10vh auto;
+  margin: 5vh auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 12px;
-  padding: 48px 32px;
+  gap: 10px;
+  padding: 32px 32px;
 }
 
 .success-icon {
