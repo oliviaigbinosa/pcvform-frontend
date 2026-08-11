@@ -13,7 +13,7 @@
           v-model="loginForm.email"
           label="Email Address"
           type="email"
-          placeholder="user@getpayedmail.com or @gmail.com"
+          placeholder="user@getpayedmail.com"
           :error="loginErrors.email"
           :disabled="loggingIn"
           @input="delete loginErrors.email"
@@ -66,6 +66,8 @@
           </template>
         </FormField>
 
+        <NuxtLink to="/forgot-password" class="forgot-link">Forgot Password?</NuxtLink>
+
         <span v-if="loginErrors.general" class="err-msg login-general-error">{{
           loginErrors.general
         }}</span>
@@ -81,6 +83,21 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+.forgot-link {
+  display: inline-flex;
+  align-self: flex-end;
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 500;
+  margin: -4px 0 6px;
+}
+
+.forgot-link:hover {
+  color: var(--accent);
+}
+</style>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'

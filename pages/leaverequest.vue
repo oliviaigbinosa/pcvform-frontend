@@ -26,10 +26,10 @@
           </p>
 
           <h1 class="serif">
-            {{ activeTab === 'requests' ? 'Leave Requests' : 'Leave Request Form' }}
+            {{ activeTab === 'requests' ? (isAdmin ? 'Leave Requests' : 'My Leave Requests') : 'Leave Request Form' }}
           </h1>
 
-          <p v-if="activeTab === 'requests'" class="vouchers-sub">
+          <p v-if="activeTab === 'requests' && isAdmin" class="vouchers-sub">
             {{ displayedLeaveRequests.length }} leave request{{ displayedLeaveRequests.length !== 1 ? 's' : '' }} submitted by users
           </p>
         </div>
@@ -38,7 +38,7 @@
 
     </div>
 
-    <nav v-if="isAdmin" class="dashboard-tabs" role="tablist" aria-label="Leave request tabs">
+    <nav class="dashboard-tabs" role="tablist" aria-label="Leave request tabs">
       <button
         role="tab"
         class="dashboard-tabs__tab"
@@ -59,7 +59,7 @@
       </button>
     </nav>
 
-    <div v-if="!isAdmin || activeTab === 'form'" class="leave-form-wrap">
+    <div v-if="activeTab === 'form'" class="leave-form-wrap">
       <div v-if="submitted" class="card success-card">
         <div class="success-icon">✓</div>
         <h2 class="serif">Leave Request Submitted</h2>
@@ -371,9 +371,9 @@
  
     </div>
 
-    <!-- Admin tab -->
-    <div v-show="isAdmin && activeTab === 'requests'">
-      <div class="admin-filters card">
+    <!-- Requests tab -->
+    <div v-show="activeTab === 'requests'">
+      <div v-if="isAdmin" class="admin-filters card">
         <div class="filter-row">
           <input
             v-model="filterText"
@@ -392,7 +392,7 @@
 
         <div v-if="!displayedLeaveRequests.length" class="vouchers-empty">
           <p class="vouchers-empty__title">No leave requests</p>
-          <p class="vouchers-empty__sub">Leave requests from users you onboarded will appear here.</p>
+          <p class="vouchers-empty__sub">{{ isAdmin ? 'Leave requests from users you onboarded will appear here.' : 'Your leave requests will appear here.' }}</p>
         </div>
 
         <table v-else class="vouchers-table">
@@ -446,7 +446,7 @@
                     {{ leave.status || 'Pending' }}
                   </span>
                   <button
-                    v-if="(leave.status || 'Pending').toLowerCase() === 'pending'"
+                    v-if="isAdmin && (leave.status || 'Pending').toLowerCase() === 'pending'"
                     type="button"
                     class="info-btn"
                     title="Click to approve/decline"
@@ -607,11 +607,18 @@ async function confirmStatus() {
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const onboardingUserEmails = computed(() => onboardingUsers.value.map((u) => u.email))
 const displayedLeaveRequests = computed(() => {
-  let requests = isSuperAdmin.value
-    ? allLeaveRequests.value
-    : allLeaveRequests.value.filter((leave) =>
-        onboardingUserEmails.value.includes(leave.submittedBy),
-      )
+  let requests
+  if (isSuperAdmin.value) {
+    requests = allLeaveRequests.value
+  } else if (isAdmin.value) {
+    requests = allLeaveRequests.value.filter((leave) =>
+      onboardingUserEmails.value.includes(leave.submittedBy),
+    )
+  } else {
+    requests = allLeaveRequests.value.filter((leave) =>
+      String(leave.submittedBy).toLowerCase() === String(userEmail.value).toLowerCase(),
+    )
+  }
 
   const query = filterText.value.trim().toLowerCase()
   if (query) {
@@ -694,15 +701,13 @@ onMounted(async () => {
   try {
     if (isAdmin.value) {
       await fetchOnboardingUsers()
-      if (!allLeaveRequests.value.length) await fetchLeaveRequests()
     }
+    if (!allLeaveRequests.value.length) await fetchLeaveRequests()
   } catch {
     // ignore
   }
   form.departmentManager = userCreatedBy.value || ''
   window.addEventListener('click', closeDropdowns)
-
-  if (!isAdmin.value) activeTab.value = 'form'
 })
 onBeforeUnmount(() => window.removeEventListener('click', closeDropdowns))
 
