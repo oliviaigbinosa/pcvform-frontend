@@ -1,9 +1,6 @@
 import { computed, ref } from 'vue'
 
-const API_BASE =
-  (typeof import.meta.env !== 'undefined'
-    ? import.meta.env.VITE_API_BASE_URL
-    : '') || ''
+const API_BASE = process.client ? import.meta.env.VITE_API_BASE_URL || '' : ''
 
 const userEmail = ref('')
 const userRole = ref('')
@@ -17,7 +14,7 @@ const loadingVouchers = ref(true)
 const allLeaveRequests = ref<any[]>([])
 const loadingLeaveRequests = ref(true)
 
-if (typeof window !== 'undefined') {
+if (process.client) {
   userEmail.value = sessionStorage.getItem('pcv_user') || ''
   userRole.value = sessionStorage.getItem('pcv_role') || ''
   userDepartment.value = localStorage.getItem('pcv_department') || ''
