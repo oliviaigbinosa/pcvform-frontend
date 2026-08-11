@@ -1950,3 +1950,551 @@ router-link {
   font-size: 14px;
   opacity: 0.85;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — Tablet (≤ 768px)
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* ── App wrapper ─────────────────────────────────────────── */
+  .app-wrap {
+    padding: 24px 12px;
+  }
+
+  /* ── Container ───────────────────────────────────────────── */
+  .container {
+    max-width: 100%;
+  }
+
+  /* ── Card ────────────────────────────────────────────────── */
+  .card {
+    padding: 20px 16px;
+  }
+
+  .step-card {
+    margin-bottom: 16px;
+  }
+
+  /* ── Step heading ────────────────────────────────────────── */
+  .step-head {
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+
+  .step-head h2 {
+    font-size: 15px;
+  }
+
+  /* ── Voucher header ──────────────────────────────────────── */
+  .pcv-header {
+    margin-bottom: 24px;
+  }
+
+  .pcv-header h1 {
+    font-size: 18px;
+  }
+
+  .pcv-logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* ── Stepper ─────────────────────────────────────────────── */
+  .stepper {
+    margin-bottom: 22px;
+  }
+
+  .stepper__bubble {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .stepper__item:not(:last-child)::after {
+    top: 13px;
+    left: calc(50% + 14px);
+    right: calc(-50% + 14px);
+  }
+
+  /* ── Fields ──────────────────────────────────────────────── */
+  .fields {
+    gap: 16px;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────── */
+  input,
+  textarea,
+  select {
+    padding: 9px 12px;
+    font-size: 14px;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn {
+    padding: 9px 16px;
+    font-size: 13px;
+  }
+
+  .review-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* ── Navigation row ──────────────────────────────────────── */
+  .nav-row {
+    gap: 8px;
+  }
+
+  .step-counter {
+    font-size: 9px;
+  }
+
+  /* ── Success card ────────────────────────────────────────── */
+  .success-card {
+    max-width: 100%;
+    margin: 3vh auto;
+    padding: 24px 20px;
+  }
+
+  .success-card h2 {
+    font-size: 20px;
+  }
+
+  .success-card p {
+    font-size: 13px;
+  }
+
+  /* ── Modal ───────────────────────────────────────────────── */
+  .modal-backdrop {
+    padding: 16px 12px;
+  }
+
+  .modal-header {
+    padding: 12px 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  /* ── Preview rows ────────────────────────────────────────── */
+  .preview-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .preview-row > span:first-child {
+    width: auto;
+  }
+
+  .preview-row.block-row {
+    gap: 4px;
+  }
+
+  .preview-title {
+    font-size: 17px;
+  }
+
+  /* ── Amount banner ───────────────────────────────────────── */
+  .amount-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 14px 16px;
+  }
+
+  .amount-total {
+    font-size: 22px;
+  }
+
+  /* ── Login page ──────────────────────────────────────────── */
+  .login-wrap {
+    padding: 16px 12px;
+  }
+
+  .login-card {
+    padding: 28px 20px;
+  }
+
+  .login-card__title {
+    font-size: 20px;
+  }
+
+  .login-form {
+    gap: 14px;
+  }
+
+  /* ── Page wrapper ────────────────────────────────────────── */
+  .page-wrap {
+    padding: 20px 14px;
+  }
+
+  /* ── Vouchers list ───────────────────────────────────────── */
+  .vouchers-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .vouchers-title {
+    font-size: 20px;
+  }
+
+  .vouchers-sub {
+    font-size: 12px;
+  }
+
+  .vouchers-empty {
+    padding: 40px 20px;
+  }
+
+  /* ── Vouchers table ──────────────────────────────────────── */
+  .vouchers-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vouchers-table {
+    min-width: 600px;
+  }
+
+  .vouchers-table th {
+    padding: 10px 12px;
+    font-size: 9px;
+  }
+
+  .vouchers-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  /* ── Summary cards ───────────────────────────────────────── */
+  .vouchers-summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .summary-card {
+    padding: 14px 16px;
+  }
+
+  .summary-value {
+    font-size: 22px;
+  }
+
+  /* ── Dashboard tabs ──────────────────────────────────────── */
+  .dashboard-tabs {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .dashboard-tabs__tab {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* ── Admin filters ───────────────────────────────────────── */
+  .admin-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .admin-filter-field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-filter-clear {
+    align-self: stretch;
+    text-align: center;
+  }
+
+  /* ── Onboarding form ─────────────────────────────────────── */
+  .onboarding-form {
+    padding: 16px;
+  }
+
+  .onboarding-form__fields {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .onboarding-field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .onboarding-submit {
+    align-self: stretch;
+  }
+
+  /* ── Settings ────────────────────────────────────────────── */
+  .settings-form {
+    max-width: 100%;
+    padding: 20px 16px;
+  }
+
+  /* ── Approve/Decline actions ─────────────────────────────── */
+  .approve-actions-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .approve-actions-bar .btn {
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 9999px;
+  }
+
+  /* ── File preview ────────────────────────────────────────── */
+  .file-preview-content--pdf {
+    width: 100vw;
+    height: 75vh;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — Phone (≤ 480px)
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* ── App wrapper ─────────────────────────────────────────── */
+  .app-wrap {
+    padding: 16px 8px;
+  }
+
+  /* ── Card ────────────────────────────────────────────────── */
+  .card {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+
+  /* ── Voucher header ──────────────────────────────────────── */
+  .pcv-header {
+    gap: 8px;
+  }
+
+  .pcv-header h1 {
+    font-size: 16px;
+  }
+
+  .pcv-logo {
+    width: 34px;
+    height: 34px;
+  }
+
+  .pcv-logo svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ── Stepper ─────────────────────────────────────────────── */
+  .stepper__label {
+    display: none !important;
+  }
+
+  .stepper__bubble {
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+  }
+
+  .stepper__item:not(:last-child)::after {
+    top: 12px;
+    left: calc(50% + 13px);
+    right: calc(-50% + 13px);
+  }
+
+  /* ── Step heading ────────────────────────────────────────── */
+  .step-head h2 {
+    font-size: 14px;
+  }
+
+  /* ── Fields ──────────────────────────────────────────────── */
+  .fields {
+    gap: 14px;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────── */
+  input,
+  textarea,
+  select {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .login-submit {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* ── Navigation row ──────────────────────────────────────── */
+  .nav-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .step-counter {
+    order: -1;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+
+  /* ── Success card ────────────────────────────────────────── */
+  .success-card {
+    padding: 20px 16px;
+  }
+
+  .success-card h2 {
+    font-size: 18px;
+  }
+
+  .success-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
+
+  /* ── Modal ───────────────────────────────────────────────── */
+  .modal-backdrop {
+    padding: 12px 8px;
+  }
+
+  .modal-header {
+    padding: 10px 12px;
+  }
+
+  .modal-header__title {
+    font-size: 13px;
+  }
+
+  .modal-body {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .modal-footer {
+    padding: 10px 12px;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* ── Preview ─────────────────────────────────────────────── */
+  .preview-title {
+    font-size: 15px;
+  }
+
+  .preview-head {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .preview-head__right {
+    text-align: left;
+  }
+
+  /* ── Amount banner ───────────────────────────────────────── */
+  .amount-total {
+    font-size: 20px;
+  }
+
+  /* ── Login page ──────────────────────────────────────────── */
+  .login-card {
+    padding: 24px 16px;
+  }
+
+  .login-card__title {
+    font-size: 18px;
+  }
+
+  .login-card__sub {
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+
+  .login-form {
+    gap: 12px;
+  }
+
+  /* ── Page wrapper ────────────────────────────────────────── */
+  .page-wrap {
+    padding: 16px 10px;
+  }
+
+  /* ── Vouchers ────────────────────────────────────────────── */
+  .vouchers-title {
+    font-size: 18px;
+  }
+
+  .vouchers-empty {
+    padding: 32px 16px;
+  }
+
+  .vouchers-empty__title {
+    font-size: 14px;
+  }
+
+  /* ── Summary cards ───────────────────────────────────────── */
+  .summary-value {
+    font-size: 18px;
+  }
+
+  /* ── Dashboard tabs ──────────────────────────────────────── */
+  .dashboard-tabs__tab {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  /* ── Upload zone ─────────────────────────────────────────── */
+  .upload-zone {
+    padding: 20px 12px;
+  }
+
+  .upload-title {
+    font-size: 13px;
+  }
+
+  /* ── File list ───────────────────────────────────────────── */
+  .file-item {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  /* ── File preview ────────────────────────────────────────── */
+  .file-preview-close {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .file-preview-title {
+    top: 12px;
+    left: 12px;
+    font-size: 13px;
+    max-width: calc(100% - 60px);
+  }
+}

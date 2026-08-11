@@ -1361,7 +1361,8 @@ async function handleRemoveUser(id) {
 }
 
 .page-wrap > .dashboard-tabs {
-  width: 800px !important;
+  width: 100%;
+  max-width: 800px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -1376,5 +1377,56 @@ async function handleRemoveUser(id) {
   padding: 0 16px;
   white-space: nowrap;
   font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .admin-all-vouchers .vouchers-table {
+    min-width: 700px;
+  }
+
+  .admin-all-vouchers .admin-user-email {
+    max-width: 100px;
+  }
+
+  .admin-all-vouchers .voucher-purpose {
+    max-width: 100px;
+  }
+
+  .onboarding-form__fields {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .onboarding-field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .onboarding-submit {
+    align-self: stretch;
+  }
+
+  .admin-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-all-vouchers .vouchers-table {
+    min-width: 600px;
+  }
+
+  .admin-all-vouchers .admin-user-email {
+    max-width: 80px;
+  }
+
+  .admin-all-vouchers .voucher-purpose {
+    max-width: 80px;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
 }
 </style>

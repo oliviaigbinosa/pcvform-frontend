@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="sidebarOpen" @click="sidebarOpen = false" class="sidebar-overlay" />
+    <div v-if="sidebarOpen" @click="emit('close')" class="sidebar-overlay" />
     <aside :class="['sidebar', { 'open': sidebarOpen }]">
       <div class="sidebar__brand">
         <div class="sidebar__icon">
@@ -10,7 +10,7 @@
           <p class="sidebar__company">Getpayed Ltd.</p>
           <p class="sidebar__system">PCV System</p>
         </div>
-        <button @click="sidebarOpen = false" aria-label="Close menu" class="sidebar__close">
+        <button @click="emit('close')" aria-label="Close menu" class="sidebar__close">
           ✕
         </button>
       </div>
@@ -31,7 +31,7 @@
            
             :to="{ name: 'settings' }"
             aria-label="Settings"
-            @click="sidebarOpen = false"
+            @click="emit('close')"
            :class="['sidebar__settings-btn', { 'active': route.name === 'settings' }]">
             <svg
               width="16"
@@ -52,7 +52,7 @@
          
          
           :to="{ name: 'form' }"
-          @click="sidebarOpen = false"
+          @click="emit('close')"
          :class="['sidebar__nav-item', { 'active': route.name === 'form' }]">
           <svg
             width="16"
@@ -73,7 +73,7 @@
          
          
           :to="{ name: 'vouchers' }"
-          @click="sidebarOpen = false"
+          @click="emit('close')"
          :class="['sidebar__nav-item', { 'active': route.name === 'vouchers' }]">
           <svg
             width="16"
@@ -92,7 +92,7 @@
         </NuxtLink>
         <NuxtLink
           :to="{ name: 'leaverequest' }"
-          @click="sidebarOpen = false"
+          @click="emit('close')"
           :class="['sidebar__nav-item', { 'active': route.name === 'leaverequest' }]">
           <svg
             width="16"
@@ -114,7 +114,7 @@
          
          
           :to="{ name: 'admin' }"
-          @click="sidebarOpen = false"
+          @click="emit('close')"
          :class="['sidebar__nav-item', { 'active': route.name === 'admin' }]">
           <svg
             width="16"
@@ -176,10 +176,15 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isAdmin, logoutUser, userEmail, userRole } from '~/composables/appState'
 
+const props = defineProps({
+  sidebarOpen: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['close'])
+
 const route = useRoute()
 const router = useRouter()
 
-const sidebarOpen = ref(true)
 const showLogoutModal = ref(false)
 
 const userInitial = computed(() => {

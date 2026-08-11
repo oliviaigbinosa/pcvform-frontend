@@ -183,4 +183,36 @@ async function handleSubmit() {
   color: #059669;
   text-align: center;
 }
+
+@media (max-width: 480px) {
+  .forgot-card {
+    padding: 24px 16px;
+    min-height: auto;
+  }
+
+  .forgot-title {
+    font-size: 20px;
+    transform: none;
+    margin-top: 0;
+  }
+
+  .forgot-label {
+    margin: 32px 0 4px;
+    transform: none;
+  }
+
+  .email-field input {
+    padding: 10px 12px 10px 38px;
+    font-size: 13px;
+  }
+
+  .email-icon {
+    left: 10px;
+  }
+
+  .email-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+}
 </style>

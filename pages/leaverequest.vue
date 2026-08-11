@@ -783,7 +783,8 @@ async function submitLeave() {
 }
 
 .page-header {
-  width: 750px;
+  width: 100%;
+  max-width: 750px;
   margin: 16px auto 40px;
 }
 
@@ -852,7 +853,8 @@ async function submitLeave() {
 
 
 .dashboard-tabs {
-  width: 800px !important;
+  width: 100%;
+  max-width: 800px;
   margin-top: 24px;
   margin-left: auto;
   margin-right: auto;
@@ -881,29 +883,77 @@ async function submitLeave() {
 @media (max-width: 768px) {
 
   .page {
-    padding: 24px;
+    padding: 16px;
+  }
+
+  .page-header {
+    margin: 8px auto 24px;
   }
 
   .page-header__left {
-    gap: 14px;
+    gap: 10px;
   }
 
   .header-icon {
-    width: 42px;
-    height: 42px;
-    margin-top: 4px;
+    width: 38px;
+    height: 38px;
+    margin-top: 2px;
   }
 
   .serif {
-    font-size: 32px;
+    font-size: 18px;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .card {
-    padding: 24px;
+    padding: 20px 16px;
+  }
+
+  .content {
+    padding-top: 12px;
+  }
+
+  .button-group {
+    margin-top: 24px;
+    justify-content: stretch;
+  }
+
+  .button-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .content .vouchers-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content .vouchers-table {
+    min-width: 600px;
+  }
+
+  .filter-row {
+    flex-wrap: wrap;
+  }
+
+  .filter-row .btn {
+    transform: none;
+  }
+
+  .admin-filters {
+    padding: 14px 16px;
+  }
+
+  .preview-row > span:first-child {
+    width: auto;
+  }
+
+  .modal-body {
+    padding: 16px;
   }
 }
 
@@ -1190,5 +1240,55 @@ async function submitLeave() {
   color: var(--accent);
   display: block;
   margin: 8px 0 24px;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 12px;
+  }
+
+  .serif {
+    font-size: 16px;
+  }
+
+  .card {
+    padding: 16px 12px;
+  }
+
+  .header-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .button-group {
+    margin-top: 20px;
+  }
+
+  .content .vouchers-table {
+    min-width: 500px;
+  }
+
+  .content .vouchers-table th,
+  .content .vouchers-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .content .vouchers-table .reason-col,
+  .content .vouchers-table .reason-cell {
+    min-width: 150px;
+  }
+
+  .filter-input {
+    font-size: 13px;
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .preview-row {
+    gap: 4px;
+  }
 }
 </style>

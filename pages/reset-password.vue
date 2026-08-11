@@ -232,4 +232,25 @@ async function handleSubmit() {
   font-size: 22px;
   font-weight: 700;
 }
+
+@media (max-width: 480px) {
+  .forgot-title {
+    font-size: 22px;
+  }
+
+  .forgot-sub {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .success-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
+
+  .success-title {
+    font-size: 18px;
+  }
+}
 </style>

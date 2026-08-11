@@ -486,7 +486,8 @@ const displayedVouchers = computed(() =>
 }
 
 .page-wrap > .dashboard-tabs {
-  width: 800px !important;
+  width: 100%;
+  max-width: 800px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -494,5 +495,28 @@ const displayedVouchers = computed(() =>
 .page-wrap > .dashboard-tabs .dashboard-tabs__tab {
   flex: 1;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .approve-actions-bar .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .voucher-purpose {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .approve-actions-bar .btn {
+    width: 100%;
+  }
+
+  .voucher-purpose {
+    max-width: 80px;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
 }
 </style>
