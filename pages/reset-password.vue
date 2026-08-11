@@ -108,13 +108,13 @@
         </button>
       </form>
 
-      <NuxtLink to="/login" class="forgot-link">Back to Login</NuxtLink>
+      <a href="/login" class="forgot-link">Back to Login</a>
     </div>
 
     <div v-else class="login-card success-card">
       <div class="success-icon">✓</div>
       <h2 class="serif success-title">Your password has been successfully reset</h2>
-      <NuxtLink to="/login" class="btn btn-primary login-submit">Back to Login</NuxtLink>
+      <a href="/login" class="btn btn-primary login-submit">Back to Login</a>
     </div>
   </div>
 </template>

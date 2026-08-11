@@ -66,7 +66,7 @@
           </template>
         </FormField>
 
-        <NuxtLink to="/forgot-password" class="forgot-link">Forgot Password?</NuxtLink>
+        <a href="/forgot-password" target="_blank" rel="noopener" class="forgot-link">Forgot Password?</a>
 
         <span v-if="loginErrors.general" class="err-msg login-general-error">{{
           loginErrors.general
@@ -100,10 +100,10 @@
 </style>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FormField from '../components/FormField.vue'
-import { API_BASE, isLoggedIn, loginUser } from '~/composables/appState'
+import { API_BASE, loginUser } from '~/composables/appState'
 
 const router = useRouter()
 
@@ -115,10 +115,6 @@ const showPassword = ref(false)
 const loggingIn = ref(false)
 const loginForm = reactive({ email: '', password: '' })
 const loginErrors = reactive({})
-
-onMounted(() => {
-  if (isLoggedIn.value) router.replace({ name: 'form' })
-})
 
 async function handleLogin() {
   delete loginErrors.email

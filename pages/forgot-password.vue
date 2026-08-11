@@ -1,10 +1,11 @@
 <template>
   <div class="login-wrap">
-    <div class="login-card">
+    <div class="login-card forgot-card">
       <h1 class="forgot-title">Forgot Password?</h1>
-      <p class="forgot-sub">Enter your email and we'll send you a reset link.</p>
+      
 
       <form class="login-form" @submit.prevent="handleSubmit" novalidate>
+        <label for="forgot-email" class="forgot-label">Email Address:</label>
         <div class="email-field">
           <span class="email-icon">
             <svg
@@ -20,6 +21,7 @@
             </svg>
           </span>
           <input
+            id="forgot-email"
             v-model="email"
             type="email"
             placeholder="Enter your email"
@@ -40,7 +42,7 @@
         </button>
       </form>
 
-      <NuxtLink to="/login" class="forgot-link">Back to Login</NuxtLink>
+      <a href="/login" class="forgot-link">Back to Login</a>
     </div>
   </div>
 </template>
@@ -78,7 +80,7 @@ async function handleSubmit() {
       return
     }
 
-    message.value = 'If an account with that email exists, a reset link has been sent.'
+    message.value = 'A reset link has been sent to your email. Please check your inbox.'
     email.value = ''
   } catch {
     error.value = 'Could not reach the server. Make sure the backend is running.'
@@ -90,10 +92,14 @@ async function handleSubmit() {
 
 <style scoped>
 .forgot-title {
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 700;
   color: var(--fg);
-  margin-bottom: 8px;
+  letter-spacing: 0.4px;
+  width: 100%;
+  margin: 0 0 8px;
+  transform: translateY(14px);
+  margin-top: 8px;
   text-align: center;
 }
 
@@ -101,7 +107,17 @@ async function handleSubmit() {
   font-size: 14px;
   color: var(--muted-fg);
   margin-bottom: 28px;
+  transform: translateY(-28px);
   text-align: center;
+}
+
+.forgot-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg);
+  margin: 52px 0 4px;
+  transform: translateY(12px);
 }
 
 .email-field {
@@ -153,6 +169,13 @@ async function handleSubmit() {
 
 .forgot-link:hover {
   color: var(--accent);
+}
+
+.forgot-card {
+  max-width: 520px;
+  padding: 32px 40px;
+  min-height: 380px;
+  justify-content: center;
 }
 
 .success-msg {
