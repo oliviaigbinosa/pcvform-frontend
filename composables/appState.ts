@@ -1,6 +1,9 @@
 import { computed, ref } from 'vue'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+const API_BASE =
+  (typeof import.meta.env !== 'undefined'
+    ? import.meta.env.VITE_API_BASE_URL
+    : '') || ''
 
 const userEmail = ref('')
 const userRole = ref('')
