@@ -1,9 +1,10 @@
 [build]
-  command = "npm run generate"
+  command = "npm install && npm run generate"
   publish = ".output/public"
 
 [build.environment]
   NODE_VERSION = "22"
+  NPM_FLAGS = "--no-fund --no-audit"
 
 # Set VITE_API_BASE_URL to your Render backend URL in the Netlify dashboard.
 # Example: VITE_API_BASE_URL=https://pcv-backend-xxxxx.onrender.com
