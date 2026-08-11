@@ -3,7 +3,7 @@
   publish = ".output/public"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
 
 # Set VITE_API_BASE_URL to your Render backend URL in the Netlify dashboard.
 # Example: VITE_API_BASE_URL=https://pcv-backend-xxxxx.onrender.com
