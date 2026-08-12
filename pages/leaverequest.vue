@@ -517,14 +517,11 @@ import {
   isAdmin,
   userCreatedBy,
   userEmail,
-  userRole,
   fetchCurrentUser,
-  fetchOnboardingUsers,
   fetchLeaveRequests,
   addLeaveRequest,
   updateLeaveRequestStatus,
   onboardDepts,
-  onboardingUsers,
   allLeaveRequests,
   loadingLeaveRequests,
 } from '~/composables/appState'
@@ -604,15 +601,11 @@ async function confirmStatus() {
   selectedLeave.value = null
 }
 
-const isSuperAdmin = computed(() => userRole.value === 'super admin')
-const onboardingUserEmails = computed(() => onboardingUsers.value.map((u) => u.email))
 const displayedLeaveRequests = computed(() => {
   let requests
-  if (isSuperAdmin.value) {
-    requests = allLeaveRequests.value
-  } else if (isAdmin.value) {
+  if (isAdmin.value) {
     requests = allLeaveRequests.value.filter((leave) =>
-      onboardingUserEmails.value.includes(leave.submittedBy),
+      String(leave.departmentManager).toLowerCase() === String(userEmail.value).toLowerCase(),
     )
   } else {
     requests = allLeaveRequests.value.filter((leave) =>
@@ -699,9 +692,6 @@ onMounted(async () => {
     // keep localStorage values
   }
   try {
-    if (isAdmin.value) {
-      await fetchOnboardingUsers()
-    }
     if (!allLeaveRequests.value.length) await fetchLeaveRequests()
   } catch {
     // ignore
@@ -845,13 +835,6 @@ async function submitLeave() {
   padding-top: 24px;
 }
 
-.page-header {
-  max-width: 1000px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-
 .dashboard-tabs {
   width: 100%;
   max-width: 800px;
@@ -867,7 +850,7 @@ async function submitLeave() {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 28px;
 }
 
@@ -879,6 +862,10 @@ async function submitLeave() {
   margin-top: 28px;
 }
 
+
+.leave-form-wrap {
+  padding: 0 16px;
+}
 
 @media (max-width: 768px) {
 
@@ -905,7 +892,7 @@ async function submitLeave() {
   }
 
   .form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
 
@@ -948,8 +935,12 @@ async function submitLeave() {
     padding: 14px 16px;
   }
 
+  .preview-row {
+    align-items: flex-start;
+  }
+
   .preview-row > span:first-child {
-    width: auto;
+    width: 120px;
   }
 
   .modal-body {

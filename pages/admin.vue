@@ -1111,7 +1111,7 @@ const pendingOnboardingCount = computed(
 )
 
 function isOnboardEmail(v) {
-  return /^[^\s@]+@(getpayedmail\.com|gmail\.com)$/.test(v)
+  return /^[^\s@]+@getpayedmail\.com$/.test(v)
 }
 
 function generateStrongPassword() {
@@ -1134,7 +1134,7 @@ async function handleAddUser() {
   delete onboardErrors.general
 
   if (!isOnboardEmail(onboardForm.email)) {
-    onboardErrors.email = 'Email must be a @getpayedmail.com or @gmail.com address'
+    onboardErrors.email = 'Email must be a @getpayedmail.com address'
   }
   if (!onboardForm.department) {
     onboardErrors.department = 'Please select a department'

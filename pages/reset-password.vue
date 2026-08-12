@@ -138,13 +138,28 @@ const loading = ref(false)
 const success = ref(false)
 const errors = reactive({})
 
+function validatePassword(password) {
+  if (!password) return 'Password is required'
+  if (password.length < 8) return 'Password must be at least 8 characters long'
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter'
+  if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter'
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number'
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'Password must contain at least one special character'
+  return null
+}
+
 async function handleSubmit() {
   Object.keys(errors).forEach((k) => delete errors[k])
 
   if (!token.value) errors.general = 'Reset link is missing or invalid'
-  if (!newPassword.value) errors.newPassword = 'New password is required'
-  if (!confirmPassword.value) errors.confirmPassword = 'Please confirm your password'
-  if (newPassword.value !== confirmPassword.value) {
+
+  const passwordError = validatePassword(newPassword.value)
+  if (passwordError) errors.newPassword = passwordError
+
+  if (!confirmPassword.value) {
+    errors.confirmPassword = 'Please confirm your password'
+  }
+  if (newPassword.value && confirmPassword.value && newPassword.value !== confirmPassword.value) {
     errors.confirmPassword = 'Passwords do not match'
   }
 

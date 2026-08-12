@@ -1,6 +1,9 @@
 <template>
   <div class="login-wrap">
     <div class="login-card forgot-card">
+      <div class="login-card__logo">
+        <img src="/logo.svg" alt="Getpayed logo" width="40" height="40" />
+      </div>
       <h1 class="forgot-title">Forgot Password?</h1>
       
 
@@ -52,6 +55,10 @@ definePageMeta({ layout: false })
 import { ref } from 'vue'
 import { API_BASE } from '~/composables/appState'
 
+useHead({
+  link: [{ rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+})
+
 const email = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -92,14 +99,12 @@ async function handleSubmit() {
 
 <style scoped>
 .forgot-title {
-  font-size: 25px;
+  font-size: 23px;
   font-weight: 700;
   color: var(--fg);
   letter-spacing: 0.4px;
   width: 100%;
   margin: 0 0 8px;
-  transform: translateY(14px);
-  margin-top: 8px;
   text-align: center;
 }
 
@@ -116,8 +121,8 @@ async function handleSubmit() {
   font-size: 14px;
   font-weight: 500;
   color: var(--fg);
-  margin: 52px 0 4px;
-  transform: translateY(12px);
+  margin: 28px 0 4px;
+  transform: translateY(13px);
 }
 
 .email-field {
@@ -161,7 +166,7 @@ async function handleSubmit() {
 .forgot-link {
   display: block;
   text-align: center;
-  margin-top: 20px;
+  margin-top: 12px;
   font-size: 13px;
   color: var(--primary);
   font-weight: 500;

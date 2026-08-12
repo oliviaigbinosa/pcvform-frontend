@@ -542,8 +542,8 @@ const validators = {
     const e = {}
     if (!isEmail(form.to)) {
       e.to = 'Valid recipient email required'
-    } else if (!form.to.endsWith('@getpayedmail.com') && form.to !== 'igbinosaolivia6@gmail.com') {
-      e.to = 'Email must be a @getpayedmail.com address or igbinosaolivia6@gmail.com'
+    } else if (!form.to.endsWith('@getpayedmail.com')) {
+      e.to = 'Email must be a @getpayedmail.com address'
     }
     if (!form.subject.trim()) e.subject = 'Subject is required'
     return e

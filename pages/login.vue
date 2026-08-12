@@ -66,7 +66,7 @@
           </template>
         </FormField>
 
-        <a href="/forgot-password" target="_blank" rel="noopener" class="forgot-link">Forgot Password?</a>
+        <NuxtLink to="/forgot-password" class="forgot-link">Forgot Password?</NuxtLink>
 
         <span v-if="loginErrors.general" class="err-msg login-general-error">{{
           loginErrors.general
@@ -105,10 +105,14 @@ import { useRouter } from 'vue-router'
 import FormField from '../components/FormField.vue'
 import { API_BASE, loginUser } from '~/composables/appState'
 
+useHead({
+  link: [{ rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+})
+
 const router = useRouter()
 
 function isLoginEmail(v) {
-  return /^[^\s@]+@(getpayedmail\.com|gmail\.com)$/.test(v)
+  return /^[^\s@]+@getpayedmail\.com$/.test(v)
 }
 
 const showPassword = ref(false)
@@ -122,7 +126,7 @@ async function handleLogin() {
   delete loginErrors.general
 
   if (!isLoginEmail(loginForm.email)) {
-    loginErrors.email = 'Email must be a @getpayedmail.com or @gmail.com address'
+    loginErrors.email = 'Email must be a @getpayedmail.com address'
   }
   if (!loginForm.password) {
     loginErrors.password = 'Password is required'

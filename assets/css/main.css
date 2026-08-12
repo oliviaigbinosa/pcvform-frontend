@@ -264,6 +264,7 @@ body {
   flex-direction: column;
   gap: 20px;
   flex: 1;
+  min-width: 0;
   padding-bottom: 1rem;
 }
 
@@ -271,6 +272,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .field label {
@@ -286,6 +288,7 @@ input,
 textarea,
 select {
   width: 100%;
+  min-width: 0;
   padding: 10px 14px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -355,6 +358,7 @@ textarea {
 /* ── Upload zone ────────────────────────────────────────────── */
 .upload-zone {
   width: 100%;
+  min-width: 0;
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
   background: transparent;
@@ -393,6 +397,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
   margin-top: 4px;
 }
 
@@ -400,6 +405,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--muted);
@@ -408,6 +414,7 @@ textarea {
 
 .file-name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
