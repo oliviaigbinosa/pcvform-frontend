@@ -17,29 +17,29 @@
       </button>
 
       <template v-if="activeTab === 'received'">
-        <div v-if="isSuperAdmin && selectedVoucher.status === 'Processed'" class="approve-message card processed">
+        <div v-if="selectedVoucher.status === 'Processed'" class="approve-message card processed">
           <span style="display: inline-flex; align-items: center; gap: 6px;">This voucher has been processed<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg></span>
         </div>
-        <div v-else-if="isSuperAdmin && selectedVoucher.status === 'Rejected'" class="approve-message card declined">
+        <div v-else-if="selectedVoucher.status === 'Rejected'" class="approve-message card declined">
           <span style="display: inline-flex; align-items: center; gap: 6px;">This voucher has been rejected<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></span>
         </div>
         <div v-else-if="selectedVoucher.status === 'Declined'" class="approve-message card declined-admin">
           This voucher has been declined
         </div>
-        <div v-else-if="selectedVoucher.status === 'Approved' && !isSuperAdmin" class="approve-message card success">
+        <div v-else-if="isToMe && selectedVoucher.status === 'Approved' && !selectedVoucher.submitterIsAdmin" class="approve-message card success">
           This voucher has been approved
         </div>
-        <div v-else-if="isSuperAdmin && selectedVoucher.status === 'Approved'" class="approve-actions-bar">
+        <div v-else-if="isSuperAdmin && ((isToMe && selectedVoucher.submitterIsAdmin && (selectedVoucher.status === 'Pending' || selectedVoucher.status === 'Approved')) || (isCcMe && selectedVoucher.status === 'Approved'))" class="approve-actions-bar">
           <button class="btn btn-primary" :disabled="processing" style="background: #314668;" @click="showProcessModal = true">
             {{ processing && processingAction === 'process' ? 'Processing…' : 'Process' }}
           </button>
-          <button class="btn btn-decline-subtle" @click="showDeclineModal = true">Reject</button>
+          <button class="btn btn-decline-subtle" @click="declineAction = 'reject'; showDeclineModal = true">Reject</button>
         </div>
-        <div v-else-if="!isSuperAdmin && selectedVoucher.status === 'Pending'" class="approve-actions-bar">
+        <div v-else-if="isToMe && !selectedVoucher.submitterIsAdmin && selectedVoucher.status === 'Pending'" class="approve-actions-bar">
           <button class="btn btn-approve" :disabled="processing" @click="showApproveModal = true">
             {{ processing && processingAction === 'approve' ? 'Approving…' : 'Approve' }}
           </button>
-          <button class="btn btn-decline" @click="showDeclineModal = true">Decline</button>
+          <button class="btn btn-decline" @click="declineAction = 'decline'; showDeclineModal = true">Decline</button>
         </div>
       </template>
 
@@ -242,18 +242,18 @@
       </div>
     </template>
     <div v-if="showDeclineModal" class="modal-backdrop" @click.self="showDeclineModal = false">
-      <div class="modal" role="dialog" aria-modal="true" :aria-label="isSuperAdmin ? 'Reject confirmation' : 'Decline confirmation'" style="max-width: 640px;">
+      <div class="modal" role="dialog" aria-modal="true" :aria-label="declineAction === 'reject' ? 'Reject confirmation' : 'Decline confirmation'" style="max-width: 640px;">
         <div class="modal-header" style="padding: 8px 24px 4px;">
-          <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">{{ isSuperAdmin ? 'Reject voucher?' : 'Decline voucher?' }}</div>
+          <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">{{ declineAction === 'reject' ? 'Reject voucher?' : 'Decline voucher?' }}</div>
           <button class="modal-close" @click="showDeclineModal = false" aria-label="Close">✕</button>
         </div>
         <div class="modal-body">
-          <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">Are you sure you want to {{ isSuperAdmin ? 'reject' : 'decline' }} this petty cash voucher?<span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">This action cannot be undone.</span></p>
+          <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">Are you sure you want to {{ declineAction === 'reject' ? 'reject' : 'decline' }} this petty cash voucher?<span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">This action cannot be undone.</span></p>
         </div>
         <div class="modal-footer" style="border-top: none;">
           <button class="btn btn-outline" style="border-radius: 9999px;" @click="showDeclineModal = false">Cancel</button>
-          <button class="btn" :class="isSuperAdmin ? 'btn-decline-subtle' : 'btn-decline'" :disabled="processing" style="border-radius: 9999px;" @click="confirmDecline">
-            {{ processing && processingAction === 'decline' ? (isSuperAdmin ? 'Rejecting…' : 'Declining…') : (isSuperAdmin ? 'Yes, Reject' : 'Yes, Decline') }}
+          <button class="btn" :class="declineAction === 'reject' ? 'btn-decline-subtle' : 'btn-decline'" :disabled="processing" style="border-radius: 9999px;" @click="confirmDecline">
+            {{ processing && processingAction === 'decline' ? (declineAction === 'reject' ? 'Rejecting…' : 'Declining…') : (declineAction === 'reject' ? 'Yes, Reject' : 'Yes, Decline') }}
           </button>
         </div>
       </div>
@@ -314,6 +314,13 @@ const expandedPurposes = reactive({})
 const processing = ref(false)
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const processingAction = ref('')
+const declineAction = ref('decline')
+const isToMe = computed(() =>
+  Boolean(selectedVoucher.value && String(selectedVoucher.value.to).toLowerCase() === userEmail.value.toLowerCase()),
+)
+const isCcMe = computed(() =>
+  Boolean(selectedVoucher.value && String(selectedVoucher.value.cc).toLowerCase() === userEmail.value.toLowerCase()),
+)
 const showDeclineModal = ref(false)
 const showApproveModal = ref(false)
 const showProcessModal = ref(false)
@@ -397,7 +404,7 @@ async function confirmDecline() {
   processing.value = true
   processingAction.value = 'decline'
   try {
-    await setDecision(isSuperAdmin.value ? 'Rejected' : 'Declined')
+    await setDecision(declineAction.value === 'reject' ? 'Rejected' : 'Declined')
   } finally {
     processing.value = false
     processingAction.value = ''
@@ -427,13 +434,12 @@ const sentVouchers = computed(() =>
 )
 const receivedVouchers = computed(() =>
   allVouchers.value.filter((voucher) => {
-    if (isSuperAdmin.value) {
-      return ['Approved', 'Processed', 'Rejected'].includes(voucher.status || 'Pending')
-    }
     const email = userEmail.value.toLowerCase()
+    const toMatch = String(voucher.to).toLowerCase() === email
+    const ccMatch = String(voucher.cc).toLowerCase() === email
     return (
-      String(voucher.to).toLowerCase() === email ||
-      (String(voucher.cc).toLowerCase() === email && voucher.status === 'Approved')
+      toMatch ||
+      (ccMatch && ['Approved', 'Processed', 'Rejected'].includes(voucher.status || ''))
     )
   }),
 )
