@@ -92,55 +92,13 @@
   @input="clearErr('departmentManager')"
 />
 
-        <div ref="deptDropdownRef" class="field custom-select">
-          <label class="mono-label">Department</label>
-          <button
-            type="button"
-            class="custom-select__trigger"
-            :class="{ error: errors.department }"
-            @click.stop="deptDropdownOpen = !deptDropdownOpen"
-          >
-            <span class="custom-select__label">{{
-              form.department
-                ? departmentOptions.find((d) => d.value === form.department)?.label
-                : 'Select Department'
-            }}</span>
-            <svg
-              class="custom-select__chevron"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <span v-if="errors.department" class="err-msg">{{ errors.department }}</span>
-          <div v-if="deptDropdownOpen" class="custom-select__options">
-            <button
-              type="button"
-              class="custom-select__option"
-              :class="{ selected: !form.department }"
-              @click="selectDepartment('')"
-            >
-              Select Department
-            </button>
-            <button
-              v-for="dept in departmentOptions"
-              :key="dept.value"
-              type="button"
-              class="custom-select__option"
-              :class="{ selected: form.department === dept.value }"
-              @click="selectDepartment(dept.value)"
-            >
-              {{ dept.label }}
-            </button>
-          </div>
-        </div>
+        <FormField
+  label="Department"
+  v-model="form.department"
+  :readonly="true"
+  :error="errors.department"
+  @input="clearErr('department')"
+/>
 
         <div ref="leaveDropdownRef" class="field custom-select">
           <label class="mono-label">Leave Type</label>
@@ -517,13 +475,17 @@ import {
   isAdmin,
   userCreatedBy,
   userEmail,
+  userRole,
+  userDepartment,
   fetchCurrentUser,
   fetchLeaveRequests,
+  fetchOnboardingUsers,
   addLeaveRequest,
   updateLeaveRequestStatus,
   onboardDepts,
   allLeaveRequests,
   loadingLeaveRequests,
+  onboardingUsers,
 } from '~/composables/appState'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 
@@ -536,7 +498,7 @@ const submittedEmployee = ref('')
 const form = reactive({
   employeeName: '',
   departmentManager: userCreatedBy.value || '',
-  department: '',
+  department: userRole.value === 'super admin' ? 'Finance' : (userDepartment.value || ''),
   leaveType: '',
   startDate: '',
   endDate: '',
@@ -554,6 +516,7 @@ const showConfirmModal = ref(false)
 const pendingAction = ref('')
 const processing = ref(false)
 const processingAction = ref('')
+const isSuperAdmin = computed(() => userRole.value === 'super admin')
 
 function setLeaveTab(tab) {
   activeTab.value = tab
@@ -602,14 +565,17 @@ async function confirmStatus() {
 }
 
 const displayedLeaveRequests = computed(() => {
+  const myEmail = String(userEmail.value || '').toLowerCase()
+  const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
   let requests
   if (isAdmin.value) {
-    requests = allLeaveRequests.value.filter((leave) =>
-      String(leave.departmentManager).toLowerCase() === String(userEmail.value).toLowerCase(),
-    )
+    requests = allLeaveRequests.value.filter((leave) => {
+      const submittedBy = String(leave.submittedBy || '').toLowerCase()
+      return submittedBy === myEmail || onboardedEmails.has(submittedBy)
+    })
   } else {
     requests = allLeaveRequests.value.filter((leave) =>
-      String(leave.submittedBy).toLowerCase() === String(userEmail.value).toLowerCase(),
+      String(leave.submittedBy || '').toLowerCase() === myEmail,
     )
   }
 
@@ -696,7 +662,15 @@ onMounted(async () => {
   } catch {
     // ignore
   }
+  if (isAdmin.value) {
+    try {
+      await fetchOnboardingUsers()
+    } catch {
+      // ignore
+    }
+  }
   form.departmentManager = userCreatedBy.value || ''
+  form.department = isSuperAdmin.value ? 'Finance' : (userDepartment.value || '')
   window.addEventListener('click', closeDropdowns)
 })
 onBeforeUnmount(() => window.removeEventListener('click', closeDropdowns))
@@ -726,7 +700,7 @@ function resetForm() {
   Object.assign(form, {
     employeeName: '',
     departmentManager: userCreatedBy.value || '',
-    department: '',
+    department: isSuperAdmin.value ? 'Finance' : (userDepartment.value || ''),
     leaveType: '',
     startDate: '',
     endDate: '',

@@ -1310,7 +1310,6 @@ async function handleRemoveUser(id) {
   display: flex;
   align-items: center;
   padding: 0;
-  overflow: hidden;
 }
 
 .custom-select__option-label {
@@ -1322,9 +1321,8 @@ async function handleRemoveUser(id) {
   font: inherit;
   text-align: left;
   cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
   min-width: 0;
 }
 
