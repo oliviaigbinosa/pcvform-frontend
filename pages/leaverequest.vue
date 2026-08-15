@@ -566,9 +566,12 @@ async function confirmStatus() {
 
 const displayedLeaveRequests = computed(() => {
   const myEmail = String(userEmail.value || '').toLowerCase()
+  const canViewAll = myEmail === 'hr@getpayedmail.com'
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
   let requests
-  if (isAdmin.value) {
+  if (canViewAll) {
+    requests = allLeaveRequests.value
+  } else if (isAdmin.value) {
     requests = allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
       return submittedBy === myEmail || onboardedEmails.has(submittedBy)
@@ -590,17 +593,43 @@ const displayedLeaveRequests = computed(() => {
   return requests
 })
 
+function parseDate(value) {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 function validate() {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
   errors.employeeName = form.employeeName.trim() ? '' : 'Employee name is required'
   const manager = form.departmentManager.trim()
-  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(manager)
-  errors.departmentManager = manager
-    ? (isValidEmail ? '' : 'Enter a valid email')
-    : 'Department manager is required'
+  if (!manager) {
+    errors.departmentManager = 'Department manager is required'
+  } else if (isAdmin.value || isSuperAdmin.value) {
+    errors.departmentManager = /^[^\s@]+@getpayedmail\.com$/.test(manager.toLowerCase())
+      ? ''
+      : 'Manager email must be a getpayedmail.com address'
+  } else {
+    errors.departmentManager = ''
+  }
   errors.department = form.department ? '' : 'Department is required'
   errors.leaveType = form.leaveType ? '' : 'Leave type is required'
-  errors.startDate = form.startDate ? '' : 'Start date is required'
-  errors.endDate = form.endDate ? '' : 'End date is required'
+
+  if (!form.startDate) {
+    errors.startDate = 'Start date is required'
+  } else {
+    const start = parseDate(form.startDate)
+    errors.startDate = start < today ? 'Enter a valid start date' : ''
+  }
+
+  if (!form.endDate) {
+    errors.endDate = 'End date is required'
+  } else {
+    const end = parseDate(form.endDate)
+    errors.endDate = end <= today ? 'Enter a valid end date' : ''
+  }
+
   errors.reason = form.reason.trim() ? '' : 'Reason is required'
   return Object.values(errors).every((e) => !e)
 }
