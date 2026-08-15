@@ -400,7 +400,7 @@
               </td>
               <td class="text-center">
                 <template v-if="isAdmin">
-                  <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending'">
+                  <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && !leave.submitterIsAdmin">
                     <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
                       <button class="btn btn-approve" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Approved')">Approve</button>
                       <button class="btn btn-decline" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Declined')">Decline</button>

@@ -64,7 +64,7 @@
             <div class="preview-row">
               <span>To</span><span>{{ selectedVoucher.to || '—' }}</span>
             </div>
-            <div class="preview-row">
+            <div v-if="!selectedVoucher.submitterIsAdmin" class="preview-row">
               <span>CC</span><span>{{ selectedVoucher.cc || '—' }}</span>
             </div>
             <div class="preview-row">
