@@ -40,8 +40,8 @@
             <div class="preview-row">
               <span>To</span><span>{{ form.to || '—' }}</span>
             </div>
-            <div class="preview-row">
-              <span>CC</span><span>{{ form.cc || '—' }}</span>
+            <div v-if="form.cc" class="preview-row">
+              <span>CC</span><span>{{ form.cc }}</span>
             </div>
             <div class="preview-row">
               <span>Subject</span><span>{{ form.subject || '—' }}</span>

@@ -362,7 +362,7 @@
               <th>Leave Type</th>
               <th class="reason-col">Reason</th>
               <th>Attachments</th>
-              <th class="text-center">Status</th>
+              <th class="text-center">{{ isAdmin ? 'Action' : 'Status' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -399,21 +399,24 @@
                 <template v-else>—</template>
               </td>
               <td class="text-center">
-                <span class="status-wrap">
+                <template v-if="isAdmin">
+                  <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending'">
+                    <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
+                      <button class="btn btn-approve" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Approved')">Approve</button>
+                      <button class="btn btn-decline" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Declined')">Decline</button>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <span class="status-badge" :class="'status-badge--' + (leave.status?.toLowerCase() || 'pending')">
+                      {{ leave.status || 'Pending' }}
+                    </span>
+                  </template>
+                </template>
+                <template v-else>
                   <span class="status-badge" :class="'status-badge--' + (leave.status?.toLowerCase() || 'pending')">
                     {{ leave.status || 'Pending' }}
                   </span>
-                  <button
-                    v-if="isAdmin && (leave.status || 'Pending').toLowerCase() === 'pending'"
-                    type="button"
-                    class="info-btn"
-                    title="Click to approve/decline"
-                    aria-label="Approve or decline"
-                    @click.stop="openActionModal(leave)"
-                  >
-                    <span class="info-icon">i</span>
-                  </button>
-                </span>
+                </template>
               </td>
             </tr>
           </tbody>
@@ -421,23 +424,6 @@
       </div>
       </template>
     </div>
-
-    <!-- Approve/Decline modal -->
-  <div v-if="showActionModal" class="modal-backdrop" @click.self="showActionModal = false">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Approve or decline leave" style="max-width: 640px;">
-      <div class="modal-header" style="padding: 8px 24px 4px;">
-        <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">Approve or decline?</div>
-        <button class="modal-close" @click="showActionModal = false" aria-label="Close">✕</button>
-      </div>
-      <div class="modal-body" style="padding: 12px 24px; gap: 0;">
-        <p style="font-size: 16px; color: var(--muted-fg); margin: 6px 0 0;">Choose an action for this leave request.</p>
-        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; transform: translateY(-4px);">
-          <button class="btn btn-approve" style="border-radius: 9999px; padding: 9px 28px; font-size: 15px;" @click="chooseAction('Approved')">Approve</button>
-          <button class="btn" :class="isSuperAdmin ? 'btn-decline-subtle' : 'btn-decline'" style="border-radius: 9999px; padding: 9px 28px; font-size: 15px;" @click="chooseAction('Declined')">Decline</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div v-if="showConfirmModal" class="modal-backdrop" @click.self="showConfirmModal = false">
     <div class="modal" role="dialog" aria-modal="true" :aria-label="(pendingAction === 'Approved' ? 'Approve' : 'Decline') + ' confirmation'" style="max-width: 640px;">
@@ -511,7 +497,6 @@ const activeTab = useCookie('pcv_leave_tab', { default: () => 'form' })
 const expandedReasons = reactive({})
 const filterText = ref('')
 const selectedLeave = ref(null)
-const showActionModal = ref(false)
 const showConfirmModal = ref(false)
 const pendingAction = ref('')
 const processing = ref(false)
@@ -530,20 +515,16 @@ function clearFilter() {
   filterText.value = ''
 }
 
-function openActionModal(leave) {
+function confirmAction(leave, action) {
   selectedLeave.value = leave
-  showActionModal.value = true
-}
-
-function chooseAction(action) {
   pendingAction.value = action
-  showActionModal.value = false
   showConfirmModal.value = true
 }
 
 function cancelConfirm() {
   showConfirmModal.value = false
-  showActionModal.value = true
+  selectedLeave.value = null
+  pendingAction.value = ''
 }
 
 async function confirmStatus() {
@@ -560,7 +541,6 @@ async function confirmStatus() {
     processingAction.value = ''
   }
   showConfirmModal.value = false
-  showActionModal.value = false
   selectedLeave.value = null
 }
 

@@ -108,6 +108,7 @@
               readonly
             />
             <FormField
+              v-if="!isAdmin"
               v-model="form.cc"
               label="CC (notified on approval)"
               type="email"
@@ -487,6 +488,7 @@ onMounted(async () => {
     await fetchCurrentUser()
     form.department = userDepartment.value || ''
     form.to = isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || '')
+    form.cc = isAdmin.value ? '' : 'finance@getpayedmail.com'
   } catch {
     // Department stays empty if the fetch fails
   }
@@ -500,7 +502,7 @@ onBeforeUnmount(() => {
 const form = reactive({
   from: userEmail.value,
   to: isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || ''),
-  cc: 'finance@getpayedmail.com',
+  cc: isAdmin.value ? '' : 'finance@getpayedmail.com',
   subject: '',
   payee: '',
   department: userDepartment.value || '',
@@ -639,7 +641,7 @@ function resetForm() {
   Object.assign(form, {
     from: userEmail.value,
     to: isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || ''),
-    cc: 'finance@getpayedmail.com',
+    cc: isAdmin.value ? '' : 'finance@getpayedmail.com',
     subject: '',
     payee: '',
     department: userDepartment.value || '',
