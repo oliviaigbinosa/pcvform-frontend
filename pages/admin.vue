@@ -401,7 +401,7 @@
               type="email"
               placeholder="user@getpayedmail.com"
               :class="{ error: onboardErrors.email }"
-              @input="delete onboardErrors.email"
+              @input="onboardForm.email = $event.target.value.toLowerCase(); delete onboardErrors.email"
             />
             <span v-if="onboardErrors.email" class="err-msg">{{ onboardErrors.email }}</span>
           </div>
@@ -1110,8 +1110,10 @@ const pendingOnboardingCount = computed(
   () => onboardingUsers.value.filter((user) => !isUserActive(user.email)).length,
 )
 
-function isOnboardEmail(v) {
-  return /^[^\s@]+@getpayedmail\.com$/.test(v)
+function isOnboardEmail(v, role = '') {
+  if (!/^[^\s@]+@getpayedmail\.com$/.test(v)) return false
+  if (role === 'super admin') return true
+  return /^[^\s@.]+\.[^\s@.]+(?:\.[^\s@.]+)*@getpayedmail\.com$/.test(v)
 }
 
 function generateStrongPassword() {
@@ -1133,8 +1135,10 @@ async function handleAddUser() {
   delete onboardErrors.role
   delete onboardErrors.general
 
-  if (!isOnboardEmail(onboardForm.email)) {
-    onboardErrors.email = 'Email must be a @getpayedmail.com address'
+  if (!isOnboardEmail(onboardForm.email, onboardForm.role)) {
+    onboardErrors.email = onboardForm.role === 'super admin'
+      ? 'Email must be a @getpayedmail.com address'
+      : 'Email must use a dot separator and be a @getpayedmail.com address'
   }
   if (!onboardForm.department) {
     onboardErrors.department = 'Please select a department'
@@ -1146,11 +1150,12 @@ async function handleAddUser() {
 
   const password = generateStrongPassword()
   addingUser.value = true
+  let newUser = null
   try {
-    await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, onboardForm.role)
+    newUser = await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, onboardForm.role)
     await sendInviteEmail(onboardForm.email, password, userEmail.value)
     onboardForm.email = ''
-    onboardForm.department = ''
+    onboardForm.department = isSuperAdmin.value ? '' : (userDepartment.value || '')
     onboardForm.role = ''
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to add user'
@@ -1161,6 +1166,11 @@ async function handleAddUser() {
     }
   } finally {
     addingUser.value = false
+    if (newUser) {
+      onboardingUsers.value = [...onboardingUsers.value, newUser].sort(
+        (a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime(),
+      )
+    }
   }
 }
 

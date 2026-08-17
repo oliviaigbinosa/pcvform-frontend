@@ -160,7 +160,7 @@
               filter="[^A-Za-z\s]"
               placeholder="e.g. Marketing, Operations, HR"
               :error="errors.department"
-              :readonly="Boolean(userDepartment)"
+              :readonly="Boolean(userDepartment) || isSuperAdmin"
               hint="Populates the voucher number above."
               @input="clearErr('department')"
             />
@@ -309,7 +309,7 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, userDepartment, userCreatedBy, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from '~/composables/appState'
+import { addVoucher, userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from '~/composables/appState'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEPS = ['Email Details', 'Payee Info', 'Amount & Purpose', 'Documents & Review']
@@ -486,9 +486,10 @@ onMounted(async () => {
   }
   try {
     await fetchCurrentUser()
-    form.department = userDepartment.value || ''
+    form.department = isSuperAdmin.value ? 'Finance' : (userDepartment.value || '')
     form.to = isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || '')
     form.cc = isAdmin.value ? '' : 'finance@getpayedmail.com'
+    form.from = userEmail.value
   } catch {
     // Department stays empty if the fetch fails
   }
@@ -499,13 +500,15 @@ onBeforeUnmount(() => {
   window.removeEventListener('click', closeToDropdown)
 })
 
+const isSuperAdmin = computed(() => userRole.value === 'super admin')
+
 const form = reactive({
   from: userEmail.value,
   to: isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || ''),
   cc: isAdmin.value ? '' : 'finance@getpayedmail.com',
   subject: '',
   payee: '',
-  department: userDepartment.value || '',
+  department: isSuperAdmin.value ? 'Finance' : (userDepartment.value || ''),
   amountFigures: '',
   amountWords: '',
   purpose: '',
@@ -631,10 +634,15 @@ async function submitVoucher() {
     })),
   }
 
-  lastVoucherNo.value = voucherNo.value
-  showPreview.value = false
-  submitted.value = true
-  await addVoucher(entry)
+  try {
+    await addVoucher(entry)
+    lastVoucherNo.value = voucherNo.value
+    showPreview.value = false
+    submitted.value = true
+  } catch (err) {
+    console.error(err)
+    alert(err.message || 'Failed to submit voucher')
+  }
 }
 
 function resetForm() {
@@ -644,7 +652,7 @@ function resetForm() {
     cc: isAdmin.value ? '' : 'finance@getpayedmail.com',
     subject: '',
     payee: '',
-    department: userDepartment.value || '',
+    department: isSuperAdmin.value ? 'Finance' : (userDepartment.value || ''),
     amountFigures: '',
     amountWords: '',
     purpose: '',

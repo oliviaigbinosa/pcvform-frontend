@@ -331,15 +331,150 @@
 
     <!-- Requests tab -->
     <div v-show="activeTab === 'requests'">
-      <div v-if="isAdmin" class="admin-filters card">
+      <div v-if="isAdmin || isHr" class="admin-filters card">
         <div class="filter-row">
-          <input
-            v-model="filterText"
-            type="text"
-            class="filter-input"
-            placeholder="Filter by employee, status"
-          />
-          <button class="btn btn-primary" @click="clearFilter">Clear Filters</button>
+          <div ref="filterEmployeeDropdownRef" class="field admin-filter-field custom-select">
+            <label class="mono-label">Filter by Employee</label>
+            <button
+              type="button"
+              class="custom-select__trigger"
+              @click.stop="filterEmployeeDropdownOpen = !filterEmployeeDropdownOpen"
+            >
+              <span class="custom-select__label">{{
+                leaveFilter.employee || 'All Employees'
+              }}</span>
+              <svg
+                class="custom-select__chevron"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div v-if="filterEmployeeDropdownOpen" class="custom-select__options">
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.employee === '' }"
+                @click="selectLeaveFilterEmployee('')"
+              >
+                All Employees
+              </button>
+              <button
+                v-for="employee in leaveEmployees"
+                :key="employee"
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.employee === employee }"
+                @click="selectLeaveFilterEmployee(employee)"
+              >
+                {{ employee }}
+              </button>
+            </div>
+          </div>
+
+          <div ref="filterDeptDropdownRef" class="field admin-filter-field custom-select">
+            <label class="mono-label">Filter by Department</label>
+            <button
+              type="button"
+              class="custom-select__trigger"
+              @click.stop="filterDeptDropdownOpen = !filterDeptDropdownOpen"
+            >
+              <span class="custom-select__label">{{
+                leaveFilter.department || 'All Departments'
+              }}</span>
+              <svg
+                class="custom-select__chevron"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div v-if="filterDeptDropdownOpen" class="custom-select__options">
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.department === '' }"
+                @click="selectLeaveFilterDept('')"
+              >
+                All Departments
+              </button>
+              <button
+                v-for="department in leaveDepartments"
+                :key="department"
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.department === department }"
+                @click="selectLeaveFilterDept(department)"
+              >
+                {{ department }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="!isHr" ref="filterStatusDropdownRef" class="field admin-filter-field custom-select">
+            <label class="mono-label">Filter by Status</label>
+            <button
+              type="button"
+              class="custom-select__trigger"
+              @click.stop="filterStatusDropdownOpen = !filterStatusDropdownOpen"
+            >
+              <span class="custom-select__label">{{ formatStatus(leaveFilter.status) }}</span>
+              <svg
+                class="custom-select__chevron"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div v-if="filterStatusDropdownOpen" class="custom-select__options">
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.status === '' }"
+                @click="selectLeaveFilterStatus('')"
+              >
+                All Statuses
+              </button>
+              <button
+                v-for="status in leaveStatuses"
+                :key="status"
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.status === status }"
+                @click="selectLeaveFilterStatus(status)"
+              >
+                {{ formatStatus(status) }}
+              </button>
+            </div>
+          </div>
+
+          <button
+            class="btn btn-primary admin-filter-clear"
+            @click="clearLeaveFilters"
+          >
+            Clear Filters
+          </button>
         </div>
       </div>
 
@@ -350,7 +485,7 @@
 
         <div v-if="!displayedLeaveRequests.length" class="vouchers-empty">
           <p class="vouchers-empty__title">No leave requests</p>
-          <p class="vouchers-empty__sub">{{ isAdmin ? 'Leave requests from users you onboarded will appear here.' : 'Your leave requests will appear here.' }}</p>
+          <p class="vouchers-empty__sub">{{ isHr ? 'Leave requests from all employees will appear here.' : (isAdmin ? 'Leave requests from users you onboarded will appear here.' : 'Your leave requests will appear here.') }}</p>
         </div>
 
         <table v-else class="vouchers-table">
@@ -358,6 +493,7 @@
             <tr>
               <th>Date</th>
               <th>Employee</th>
+              <th>Department</th>
               <th>Leave Period</th>
               <th>Leave Type</th>
               <th class="reason-col">Reason</th>
@@ -373,6 +509,7 @@
             >
               <td class="text-muted">{{ new Date(leave.createdAt).toLocaleDateString() }}</td>
               <td class="font-medium">{{ leave.employeeName }}</td>
+              <td>{{ leave.department }}</td>
               <td class="text-muted">{{ formatLeavePeriod(leave) }}</td>
               <td>{{ leave.leaveType }}</td>
               <td class="reason-cell">
@@ -472,6 +609,7 @@ import {
   allLeaveRequests,
   loadingLeaveRequests,
   onboardingUsers,
+  API_BASE,
 } from '~/composables/appState'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 
@@ -495,13 +633,43 @@ const errors = reactive({})
 
 const activeTab = useCookie('pcv_leave_tab', { default: () => 'form' })
 const expandedReasons = reactive({})
-const filterText = ref('')
+const leaveFilter = reactive({ employee: '', status: '', department: '' })
+const filterDeptDropdownOpen = ref(false)
+const filterEmployeeDropdownOpen = ref(false)
+const filterStatusDropdownOpen = ref(false)
+const filterDeptDropdownRef = ref(null)
+const filterEmployeeDropdownRef = ref(null)
+const filterStatusDropdownRef = ref(null)
 const selectedLeave = ref(null)
 const showConfirmModal = ref(false)
 const pendingAction = ref('')
 const processing = ref(false)
 const processingAction = ref('')
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
+const isHr = computed(() => String(userEmail.value || '').toLowerCase() === 'chinenye.onyia@getpayedmail.com')
+const adminEmails = ref([])
+
+async function fetchAdminEmails() {
+  const res = await fetch(`${API_BASE}/api/admin/emails`, {
+    headers: { 'x-admin-email': userEmail.value },
+  })
+  if (!res.ok) {
+    throw new Error('Failed to fetch admin emails')
+  }
+  adminEmails.value = await res.json()
+}
+
+const userEmails = ref([])
+
+async function fetchUserEmails() {
+  const res = await fetch(`${API_BASE}/api/admin/user-emails`, {
+    headers: { 'x-admin-email': userEmail.value },
+  })
+  if (!res.ok) {
+    throw new Error('Failed to fetch user emails')
+  }
+  userEmails.value = await res.json()
+}
 
 function setLeaveTab(tab) {
   activeTab.value = tab
@@ -511,8 +679,14 @@ function toggleReason(id) {
   expandedReasons[id] = !expandedReasons[id]
 }
 
-function clearFilter() {
-  filterText.value = ''
+function formatStatus(status) {
+  return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All Statuses'
+}
+
+function clearLeaveFilters() {
+  leaveFilter.employee = ''
+  leaveFilter.status = ''
+  leaveFilter.department = ''
 }
 
 function confirmAction(leave, action) {
@@ -544,33 +718,46 @@ async function confirmStatus() {
   selectedLeave.value = null
 }
 
-const displayedLeaveRequests = computed(() => {
+const baseLeaveRequests = computed(() => {
   const myEmail = String(userEmail.value || '').toLowerCase()
-  const canViewAll = myEmail === 'hr@getpayedmail.com'
+  const canViewAll = myEmail === 'chinenye.onyia@getpayedmail.com'
+  const isManager = (leave) => String(leave.departmentManager || '').toLowerCase() === myEmail
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
-  let requests
   if (canViewAll) {
-    requests = allLeaveRequests.value
-  } else if (isAdmin.value) {
-    requests = allLeaveRequests.value.filter((leave) => {
+    return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
-      return submittedBy === myEmail || onboardedEmails.has(submittedBy)
+      const status = (leave.status || '').toLowerCase()
+      return submittedBy === myEmail || status === 'approved' || isManager(leave)
     })
-  } else {
-    requests = allLeaveRequests.value.filter((leave) =>
-      String(leave.submittedBy || '').toLowerCase() === myEmail,
-    )
   }
-
-  const query = filterText.value.trim().toLowerCase()
-  if (query) {
-    requests = requests.filter((leave) =>
-      (leave.employeeName?.toLowerCase().includes(query) || false) ||
-      (leave.status?.toLowerCase().includes(query) || false),
-    )
+  if (isAdmin.value) {
+    return allLeaveRequests.value.filter((leave) => {
+      const submittedBy = String(leave.submittedBy || '').toLowerCase()
+      return submittedBy === myEmail || onboardedEmails.has(submittedBy) || isManager(leave)
+    })
   }
+  return allLeaveRequests.value.filter((leave) =>
+    String(leave.submittedBy || '').toLowerCase() === myEmail || isManager(leave),
+  )
+})
 
-  return requests
+const leaveEmployees = computed(() =>
+  [...new Set(baseLeaveRequests.value.map((leave) => leave.employeeName).filter(Boolean))].sort(),
+)
+const leaveStatuses = computed(() =>
+  [...new Set(baseLeaveRequests.value.map((leave) => (leave.status || 'Pending').toLowerCase()).filter(Boolean))].sort(),
+)
+const leaveDepartments = computed(() =>
+  [...new Set(baseLeaveRequests.value.map((leave) => leave.department).filter(Boolean))].sort(),
+)
+
+const displayedLeaveRequests = computed(() => {
+  return baseLeaveRequests.value.filter(
+    (leave) =>
+      (!leaveFilter.employee || leave.employeeName === leaveFilter.employee) &&
+      (!leaveFilter.status || (leave.status || 'Pending').toLowerCase() === leaveFilter.status) &&
+      (!leaveFilter.department || leave.department === leaveFilter.department),
+  )
 })
 
 function parseDate(value) {
@@ -584,12 +771,22 @@ function validate() {
 
   errors.employeeName = form.employeeName.trim() ? '' : 'Employee name is required'
   const manager = form.departmentManager.trim()
+  const adminEmailSet = new Set(adminEmails.value.map((email) => String(email || '').toLowerCase()))
+  const userEmailSet = new Set(userEmails.value.map((email) => String(email || '').toLowerCase()))
   if (!manager) {
     errors.departmentManager = 'Department manager is required'
+  } else if (manager.indexOf('@') <= 0) {
+    errors.departmentManager = 'Enter a valid email address'
   } else if (isAdmin.value || isSuperAdmin.value) {
-    errors.departmentManager = /^[^\s@]+@getpayedmail\.com$/.test(manager.toLowerCase())
-      ? ''
-      : 'Manager email must be a getpayedmail.com address'
+    if (userEmailSet.has(manager.toLowerCase())) {
+      errors.departmentManager = 'This user is not a department manager'
+    } else if (!adminEmailSet.has(manager.toLowerCase())) {
+      errors.departmentManager = 'This user has not been onboarded yet'
+    } else if (!/^[^\s@]+@getpayedmail\.com$/.test(manager.toLowerCase())) {
+      errors.departmentManager = 'Manager email must be a getpayedmail.com address'
+    } else {
+      errors.departmentManager = ''
+    }
   } else {
     errors.departmentManager = ''
   }
@@ -651,12 +848,36 @@ function selectLeaveType(value) {
   clearErr('leaveType')
 }
 
+function selectLeaveFilterDept(department) {
+  leaveFilter.department = department
+  filterDeptDropdownOpen.value = false
+}
+
+function selectLeaveFilterEmployee(employee) {
+  leaveFilter.employee = employee
+  filterEmployeeDropdownOpen.value = false
+}
+
+function selectLeaveFilterStatus(status) {
+  leaveFilter.status = status
+  filterStatusDropdownOpen.value = false
+}
+
 function closeDropdowns(event) {
   if (deptDropdownRef.value && !deptDropdownRef.value.contains(event.target)) {
     deptDropdownOpen.value = false
   }
   if (leaveDropdownRef.value && !leaveDropdownRef.value.contains(event.target)) {
     leaveDropdownOpen.value = false
+  }
+  if (filterDeptDropdownRef.value && !filterDeptDropdownRef.value.contains(event.target)) {
+    filterDeptDropdownOpen.value = false
+  }
+  if (filterEmployeeDropdownRef.value && !filterEmployeeDropdownRef.value.contains(event.target)) {
+    filterEmployeeDropdownOpen.value = false
+  }
+  if (filterStatusDropdownRef.value && !filterStatusDropdownRef.value.contains(event.target)) {
+    filterStatusDropdownOpen.value = false
   }
 }
 
@@ -674,6 +895,16 @@ onMounted(async () => {
   if (isAdmin.value) {
     try {
       await fetchOnboardingUsers()
+    } catch {
+      // ignore
+    }
+    try {
+      await fetchAdminEmails()
+    } catch {
+      // ignore
+    }
+    try {
+      await fetchUserEmails()
     } catch {
       // ignore
     }
@@ -1263,6 +1494,30 @@ async function submitLeave() {
 
   .preview-row {
     gap: 4px;
+  }
+
+  .admin-filter-field {
+    min-width: 140px;
+  }
+}
+
+.admin-filter-field {
+  flex: 1 1 0;
+  min-width: 180px;
+}
+
+.filter-row .admin-filter-clear {
+  height: 34px;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-size: 13px;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .admin-filter-field {
+    min-width: 140px;
+    flex: 1 1 100%;
   }
 }
 </style>
