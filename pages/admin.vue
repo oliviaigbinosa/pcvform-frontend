@@ -160,9 +160,20 @@
             <span class="amount-total serif">₦{{ selectedVoucher.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00' }}</span>
           </div>
 
-          <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
-            Processed by {{ selectedVoucher.processedBy }}
-          </p>
+          <div v-if="selectedVoucher.approvedBy || selectedVoucher.declinedBy || selectedVoucher.processedBy" class="status-lines">
+            <p v-if="selectedVoucher.approvedBy" class="processed-by mono-label">
+              Approved by {{ selectedVoucher.approvedBy }}
+            </p>
+            <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Declined'" class="processed-by mono-label">
+              Declined by {{ selectedVoucher.declinedBy }}
+            </p>
+            <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Rejected'" class="processed-by mono-label">
+              Rejected by {{ selectedVoucher.declinedBy }}
+            </p>
+            <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
+              Processed by {{ selectedVoucher.processedBy }}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -924,7 +935,7 @@ const displayedOnboardingUsers = computed(() => {
   if (onboardingListTab.value === 'admins') {
     return onboardingUsers.value.filter((user) => user.role === 'admin')
   }
-  return onboardingUsers.value.filter((user) => user.role === 'user')
+  return onboardingUsers.value.filter((user) => user.role === 'user' || user.role === 'super admin')
 })
 
 const adminBaseVouchers = computed(() => {

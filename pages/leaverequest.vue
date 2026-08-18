@@ -38,7 +38,7 @@
 
     </div>
 
-    <nav class="dashboard-tabs" role="tablist" aria-label="Leave request tabs">
+    <nav v-if="!isFinanceManager" class="dashboard-tabs" role="tablist" aria-label="Leave request tabs">
       <button
         role="tab"
         class="dashboard-tabs__tab"
@@ -59,7 +59,7 @@
       </button>
     </nav>
 
-    <div v-if="activeTab === 'form'" class="leave-form-wrap">
+    <div v-if="activeTab === 'form' && !isFinanceManager" class="leave-form-wrap">
       <div v-if="submitted" class="card success-card">
         <div class="success-icon">✓</div>
         <h2 class="serif">Leave Request Submitted</h2>
@@ -87,7 +87,7 @@
   type="text"
   v-model="form.departmentManager"
   placeholder="Enter department manager email"
-  :readonly="!isAdmin"
+  :readonly="!isAdmin || isSuperAdmin"
   :error="errors.departmentManager"
   @input="clearErr('departmentManager')"
 />
@@ -627,15 +627,19 @@ import {
 } from '~/composables/appState'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 
+const FINANCE_MANAGER_EMAIL = 'mfon.jackson@getpayedmail.com'
 const showPreview = ref(false)
 const showFilePreview = ref(false)
 const previewFile = ref(null)
 const submitting = ref(false)
 const submitted = ref(false)
 const submittedEmployee = ref('')
+const isSuperAdmin = computed(() => userRole.value === 'super admin')
+const isFinanceManager = computed(() => String(userEmail.value || '').toLowerCase() === FINANCE_MANAGER_EMAIL)
+const isHr = computed(() => String(userEmail.value || '').toLowerCase() === 'chinenye.onyia@getpayedmail.com')
 const form = reactive({
   employeeName: '',
-  departmentManager: userCreatedBy.value || '',
+  departmentManager: userRole.value === 'super admin' ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || ''),
   department: userRole.value === 'super admin' ? 'Finance' : (userDepartment.value || ''),
   leaveType: '',
   startDate: '',
@@ -659,8 +663,6 @@ const showConfirmModal = ref(false)
 const pendingAction = ref('')
 const processing = ref(false)
 const processingAction = ref('')
-const isSuperAdmin = computed(() => userRole.value === 'super admin')
-const isHr = computed(() => String(userEmail.value || '').toLowerCase() === 'chinenye.onyia@getpayedmail.com')
 const adminEmails = ref([])
 
 async function fetchAdminEmails() {
@@ -686,6 +688,10 @@ async function fetchUserEmails() {
 }
 
 function setLeaveTab(tab) {
+  if (isFinanceManager.value) {
+    activeTab.value = 'requests'
+    return
+  }
   activeTab.value = tab
 }
 
@@ -737,6 +743,9 @@ const baseLeaveRequests = computed(() => {
   const canViewAll = myEmail === 'chinenye.onyia@getpayedmail.com'
   const isManager = (leave) => String(leave.departmentManager || '').toLowerCase() === myEmail
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
+  if (isFinanceManager.value) {
+    return allLeaveRequests.value.filter((leave) => isManager(leave))
+  }
   if (canViewAll) {
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
@@ -936,8 +945,11 @@ onMounted(async () => {
       // ignore
     }
   }
-  form.departmentManager = userCreatedBy.value || ''
+  form.departmentManager = isSuperAdmin.value ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || '')
   form.department = isSuperAdmin.value ? 'Finance' : (userDepartment.value || '')
+  if (isFinanceManager.value) {
+    activeTab.value = 'requests'
+  }
   window.addEventListener('click', closeDropdowns)
 })
 onBeforeUnmount(() => window.removeEventListener('click', closeDropdowns))
@@ -966,7 +978,7 @@ function openFilePreview(file) {
 function resetForm() {
   Object.assign(form, {
     employeeName: '',
-    departmentManager: userCreatedBy.value || '',
+    departmentManager: isSuperAdmin.value ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || ''),
     department: isSuperAdmin.value ? 'Finance' : (userDepartment.value || ''),
     leaveType: '',
     startDate: '',

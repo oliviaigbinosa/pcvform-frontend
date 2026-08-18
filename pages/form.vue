@@ -291,6 +291,8 @@
       :parsed-amount="parsedAmount"
       :formatted-amount="formattedAmount"
       :user-email="userEmail"
+      :sending="sendingVoucher"
+      :error-message="voucherError"
       @submit="submitVoucher"
     />
     <FilePreview
@@ -308,7 +310,20 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers } from '~/composables/appState'
+import { addVoucher, userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers, API_BASE } from '~/composables/appState'
+
+const FINANCE_EMAIL = 'finance@getpayedmail.com'
+const FINANCE_MANAGER_EMAIL = 'mfon.jackson@getpayedmail.com'
+
+function defaultToEmail() {
+  if (userRole.value === 'super admin') return FINANCE_MANAGER_EMAIL
+  if (isAdmin.value) return FINANCE_EMAIL
+  return userCreatedBy.value || ''
+}
+
+function defaultCcEmail() {
+  return isAdmin.value ? '' : FINANCE_EMAIL
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEPS = ['Email Details', 'Payee Info', 'Amount & Purpose', 'Documents & Review']
@@ -476,6 +491,8 @@ const showFilePreview = ref(false)
 const previewFile = ref(null)
 const toDropdownOpen = ref(false)
 const toDropdownRef = ref(null)
+const sendingVoucher = ref(false)
+const voucherError = ref('')
 
 onMounted(async () => {
   try {
@@ -486,8 +503,8 @@ onMounted(async () => {
   try {
     await fetchCurrentUser()
     form.department = isSuperAdmin.value ? 'Finance' : (userDepartment.value || '')
-    form.to = isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || '')
-    form.cc = isAdmin.value ? '' : 'finance@getpayedmail.com'
+    form.to = defaultToEmail()
+    form.cc = defaultCcEmail()
     form.from = userEmail.value
   } catch {
     // Department stays empty if the fetch fails
@@ -503,8 +520,8 @@ const isSuperAdmin = computed(() => userRole.value === 'super admin')
 
 const form = reactive({
   from: userEmail.value,
-  to: isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || ''),
-  cc: isAdmin.value ? '' : 'finance@getpayedmail.com',
+  to: defaultToEmail(),
+  cc: defaultCcEmail(),
   subject: '',
   payee: '',
   department: isSuperAdmin.value ? 'Finance' : (userDepartment.value || ''),
@@ -612,43 +629,77 @@ function openFilePreview(file) {
   showFilePreview.value = true
 }
 async function submitVoucher() {
-  const entry = {
-    id: voucherNo.value,
-    submittedBy: userEmail.value,
-    submissionDate: form.submissionDate,
-    payee: form.payee,
-    department: form.department,
-    amount: parsedAmount.value,
-    amountWords: form.amountWords,
-    purpose: form.purpose,
-    from: form.from,
-    to: form.to,
-    cc: form.cc,
-    subject: form.subject,
-    supportingDocs: form.supportingDocs.map((f) => ({
-      name: f.name,
-      type: f.type,
-      size: f.size,
-      data: f.data,
-    })),
-  }
-
+  if (sendingVoucher.value) return
+  sendingVoucher.value = true
+  voucherError.value = ''
   try {
+    const entry = {
+      id: voucherNo.value,
+      submittedBy: userEmail.value,
+      submissionDate: form.submissionDate,
+      payee: form.payee,
+      department: form.department,
+      amount: parsedAmount.value,
+      amountWords: form.amountWords,
+      purpose: form.purpose,
+      from: form.from,
+      to: form.to,
+      cc: form.cc,
+      subject: form.subject,
+      supportingDocs: form.supportingDocs.map((f) => ({
+        name: f.name,
+        type: f.type,
+        size: f.size,
+        data: f.data,
+      })),
+    }
+
     await addVoucher(entry)
+
+    const payload = {
+      voucherNo: voucherNo.value,
+      from: form.from,
+      to: form.to,
+      cc: form.cc || '',
+      subject: form.subject,
+      payee: form.payee,
+      department: form.department,
+      amount: parsedAmount.value,
+      amountWords: form.amountWords || '',
+      purpose: form.purpose || '',
+      submissionDate: form.submissionDate || '',
+      supportingDocs: form.supportingDocs || [],
+      submittedBy: userEmail.value || form.from,
+    }
+
+    const res = await fetch(`${API_BASE}/api/email/send-voucher`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to send voucher email')
+    }
+
     lastVoucherNo.value = voucherNo.value
     showPreview.value = false
     submitted.value = true
-  } catch (err) {
-    console.error(err)
-    alert(err.message || 'Failed to submit voucher')
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed to submit voucher'
+    voucherError.value = msg
+    console.error('submitVoucher failed', error)
+  } finally {
+    sendingVoucher.value = false
   }
 }
 
 function resetForm() {
   Object.assign(form, {
     from: userEmail.value,
-    to: isAdmin.value ? 'finance@getpayedmail.com' : (userCreatedBy.value || ''),
-    cc: isAdmin.value ? '' : 'finance@getpayedmail.com',
+    to: defaultToEmail(),
+    cc: defaultCcEmail(),
     subject: '',
     payee: '',
     department: isSuperAdmin.value ? 'Finance' : (userDepartment.value || ''),

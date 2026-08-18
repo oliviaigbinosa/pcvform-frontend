@@ -17,16 +17,16 @@
       </button>
 
       <template v-if="activeTab === 'received'">
-        <div v-if="selectedVoucher.status === 'Processed'" class="approve-message card processed">
+        <div v-if="displayedSelectedStatus === 'Processed'" class="approve-message card processed">
           <span style="display: inline-flex; align-items: center; gap: 6px;">This voucher has been processed<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg></span>
         </div>
-        <div v-else-if="selectedVoucher.status === 'Rejected'" class="approve-message card declined">
+        <div v-else-if="displayedSelectedStatus === 'Rejected'" class="approve-message card declined">
           <span style="display: inline-flex; align-items: center; gap: 6px;">This voucher has been rejected<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></span>
         </div>
-        <div v-else-if="selectedVoucher.status === 'Declined'" class="approve-message card declined-admin">
+        <div v-else-if="displayedSelectedStatus === 'Declined'" class="approve-message card declined-admin">
           This voucher has been declined
         </div>
-        <div v-else-if="isToMe && selectedVoucher.status === 'Approved' && !selectedVoucher.submitterIsAdmin" class="approve-message card success">
+        <div v-else-if="isToMe && displayedSelectedStatus === 'Approved' && !selectedVoucher.submitterIsAdmin && !(isSuperAdmin && activeTab === 'received')" class="approve-message card success">
           This voucher has been approved
         </div>
         <div v-else-if="canSuperAdminAct" class="approve-actions-bar">
@@ -35,7 +35,7 @@
           </button>
           <button class="btn btn-decline-subtle" @click="declineAction = 'reject'; showDeclineModal = true">Reject</button>
         </div>
-        <div v-else-if="isToMe && !selectedVoucher.submitterIsAdmin && selectedVoucher.status === 'Pending'" class="approve-actions-bar">
+        <div v-else-if="isToMe && !selectedVoucher.submitterIsAdmin && displayedSelectedStatus === 'Pending'" class="approve-actions-bar">
           <button class="btn btn-approve" :disabled="processing" @click="showApproveModal = true">
             {{ processing && processingAction === 'approve' ? 'Approving…' : 'Approve' }}
           </button>
@@ -133,9 +133,20 @@
           <span class="amount-total serif">₦{{ selectedVoucher.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00' }}</span>
         </div>
 
-        <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
-          Processed by {{ selectedVoucher.processedBy }}
-        </p>
+        <div v-if="selectedVoucher.approvedBy || selectedVoucher.declinedBy || selectedVoucher.processedBy" class="status-lines">
+          <p v-if="selectedVoucher.approvedBy" class="processed-by mono-label">
+            Approved by {{ selectedVoucher.approvedBy }}
+          </p>
+          <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Declined'" class="processed-by mono-label">
+            Declined by {{ selectedVoucher.declinedBy }}
+          </p>
+          <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Rejected'" class="processed-by mono-label">
+            Rejected by {{ selectedVoucher.declinedBy }}
+          </p>
+          <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
+            Processed by {{ selectedVoucher.processedBy }}
+          </p>
+        </div>
       </div>
     </div>
 
@@ -144,7 +155,7 @@
         <div>
           <h1 class="serif vouchers-title">My Vouchers</h1>
           <p class="vouchers-sub">
-            {{ displayedVouchers.length }} voucher{{ displayedVouchers.length !== 1 ? 's' : '' }} {{ activeTab === 'sent' ? 'sent by you' : 'sent to you' }}
+            {{ displayedVouchers.length }} voucher{{ displayedVouchers.length !== 1 ? 's' : '' }} {{ isAdminOrSuper ? (activeTab === 'sent' ? 'sent by you' : 'sent to you') : 'sent by you' }}
           </p>
         </div>
         <button class="btn btn-primary" @click="goToForm">
@@ -163,7 +174,7 @@
         </button>
       </div>
 
-      <nav class="dashboard-tabs" role="tablist" aria-label="My voucher tabs">
+      <nav v-if="isAdminOrSuper" class="dashboard-tabs" role="tablist" aria-label="My voucher tabs">
         <button
           role="tab"
           class="dashboard-tabs__tab"
@@ -198,11 +209,11 @@
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
         </svg>
-        <p class="vouchers-empty__title">No {{ activeTab === 'sent' ? 'sent' : 'received' }} vouchers</p>
+        <p class="vouchers-empty__title">No {{ isAdminOrSuper ? (activeTab === 'sent' ? 'sent' : 'received') : 'sent' }} vouchers</p>
         <p class="vouchers-empty__sub">
-          {{ activeTab === 'sent' ? 'Vouchers you submit will appear here.' : 'Vouchers sent to you will appear here.' }}
+          {{ isAdminOrSuper ? (activeTab === 'sent' ? 'Vouchers you submit will appear here.' : 'Vouchers sent to you will appear here.') : 'Vouchers you submit will appear here.' }}
         </p>
-        <button v-if="activeTab === 'sent'" class="btn btn-primary" @click="goToForm">Create your first voucher</button>
+        <button v-if="!isAdminOrSuper || activeTab === 'sent'" class="btn btn-primary" @click="goToForm">Create your first voucher</button>
       </div>
 
       <div v-else class="vouchers-table-wrap card">
@@ -234,10 +245,10 @@
               <td><span class="voucher-purpose" :class="{ expanded: expandedPurposes[voucher.id] }" @click.stop="togglePurpose(voucher.id)">{{ voucher.purpose }}</span></td>
               <td class="text-right font-mono font-medium">₦{{ voucher.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
               <td class="text-center">
-                <span class="status-badge" :class="'status-badge--' + (isSuperAdmin && activeTab === 'received' && voucher.status === 'Approved' ? 'pending' : (voucher.status?.toLowerCase() || 'pending'))">
-                  <svg v-if="voucher.status === 'Processed'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><polyline points="20 6 9 17 4 12" /></svg>
-                  <svg v-if="voucher.status === 'Rejected'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                  {{ isSuperAdmin && activeTab === 'received' && voucher.status === 'Approved' ? 'Pending' : (voucher.status || 'Pending') }}
+                <span class="status-badge" :class="'status-badge--' + (displayStatusOf(voucher).toLowerCase())">
+                  <svg v-if="displayStatusOf(voucher) === 'Processed'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><polyline points="20 6 9 17 4 12" /></svg>
+                  <svg v-if="displayStatusOf(voucher) === 'Rejected'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  {{ displayStatusOf(voucher) }}
                 </span>
               </td>
             </tr>
@@ -317,6 +328,7 @@ const previewFile = ref(null)
 const expandedPurposes = reactive({})
 const processing = ref(false)
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
+const isAdminOrSuper = computed(() => userRole.value === 'admin' || userRole.value === 'super admin')
 const processingAction = ref('')
 const declineAction = ref('decline')
 const FINANCE_EMAIL = 'finance@getpayedmail.com'
@@ -447,16 +459,34 @@ const receivedVouchers = computed(() =>
       (isSuperAdmin.value &&
         (String(voucher.to).toLowerCase() === FINANCE_EMAIL ||
           String(voucher.cc).toLowerCase() === FINANCE_EMAIL))
-    return (
+    const isMatch =
       toMatch ||
       financeRecipient ||
       (ccMatch && ['Approved', 'Processed', 'Rejected'].includes(voucher.status || ''))
-    )
+    if (isMatch && isSuperAdmin.value) {
+      return (
+        (voucher.status || '').toLowerCase() === 'approved' ||
+        voucher.status === 'Processed' ||
+        voucher.status === 'Rejected'
+      )
+    }
+    return isMatch
   }),
 )
-const displayedVouchers = computed(() =>
-  activeTab.value === 'sent' ? sentVouchers.value : receivedVouchers.value,
-)
+
+function displayStatusOf(voucher) {
+  if (!voucher) return 'Pending'
+  if (isSuperAdmin.value && activeTab.value === 'received' && voucher.status === 'Approved') {
+    return 'Pending'
+  }
+  return voucher.status || 'Pending'
+}
+
+const displayedSelectedStatus = computed(() => displayStatusOf(selectedVoucher.value))
+const displayedVouchers = computed(() => {
+  if (!isAdminOrSuper.value) return sentVouchers.value
+  return activeTab.value === 'sent' ? sentVouchers.value : receivedVouchers.value
+})
 
 
 </script>
