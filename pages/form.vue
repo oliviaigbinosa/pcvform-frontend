@@ -231,9 +231,8 @@
             />
             <FileUpload
               v-model:files="form.supportingDocs"
-              label="Attach Supporting Documents"
+              label="Supporting Documents (Optional)"
               upload-title="Click to attach files"
-              hint="Files are listed in the email body."
               @preview="openFilePreview"
             />
           </div>

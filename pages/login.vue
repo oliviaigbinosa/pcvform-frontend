@@ -8,12 +8,16 @@
       <h1 class="login-card__title serif">Sign in to your account</h1>
       <p class="login-card__sub">Petty Cash Voucher System</p>
 
+      <div v-if="showLogoutMessage" class="logout-success-block">
+        <p class="logout-success-text">You have logged out successfully. Log back in?</p>
+      </div>
+
       <form class="login-form" @submit.prevent="handleLogin" novalidate>
         <FormField
           v-model="loginForm.email"
           label="Email Address"
           type="email"
-          placeholder="user@getpayedmail.com"
+          placeholder="Enter you work email"
           :error="loginErrors.email"
           :disabled="loggingIn"
           @input="delete loginErrors.email"
@@ -97,11 +101,28 @@
 .forgot-link:hover {
   color: var(--accent);
 }
+
+.logout-success-block {
+  background: linear-gradient(to right, #1c3557 5px, #f3f4f6 5px);
+  border-radius: 0;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.logout-success-text {
+  margin: 0;
+  font-size: 14px;
+  color: #000;
+  font-weight: 500;
+  white-space: nowrap;
+}
 </style>
 
 <script setup>
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import FormField from '../components/FormField.vue'
 import { API_BASE, loginUser } from '~/composables/appState'
 
@@ -110,6 +131,7 @@ useHead({
 })
 
 const router = useRouter()
+const route = useRoute()
 
 function isLoginEmail(v) {
   return /^[^\s@]+@getpayedmail\.com$/.test(v)
@@ -119,6 +141,12 @@ const showPassword = ref(false)
 const loggingIn = ref(false)
 const loginForm = reactive({ email: '', password: '' })
 const loginErrors = reactive({})
+const showLogoutMessage = ref(route.query.logout === 'true')
+
+// Clear the logout query parameter after showing the message once
+if (showLogoutMessage.value) {
+  router.replace({ query: {} })
+}
 
 async function handleLogin() {
   delete loginErrors.email
@@ -126,7 +154,7 @@ async function handleLogin() {
   delete loginErrors.general
 
   if (!isLoginEmail(loginForm.email)) {
-    loginErrors.email = 'Email must be a @getpayedmail.com address'
+    loginErrors.email = 'Email must end with @getpayedmail.com'
   }
   if (!loginForm.password) {
     loginErrors.password = 'Password is required'

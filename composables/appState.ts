@@ -144,6 +144,8 @@ type OnboardingUser = {
   id: string
   email: string
   addedAt: string
+  role: string
+  department: string
 }
 
 const onboardingUsers = ref<OnboardingUser[]>([])

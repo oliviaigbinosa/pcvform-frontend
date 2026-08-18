@@ -30,7 +30,7 @@
           </h1>
 
           <p v-if="activeTab === 'requests' && isAdmin" class="vouchers-sub">
-            {{ displayedLeaveRequests.length }} leave request{{ displayedLeaveRequests.length !== 1 ? 's' : '' }} submitted by users
+            {{ displayedLeaveRequests.length }} leave request{{ displayedLeaveRequests.length !== 1 ? 's' : '' }} submitted by {{ isHr ? 'employees' : 'department members' }}
           </p>
         </div>
 
@@ -340,9 +340,7 @@
               class="custom-select__trigger"
               @click.stop="filterEmployeeDropdownOpen = !filterEmployeeDropdownOpen"
             >
-              <span class="custom-select__label">{{
-                leaveFilter.employee || 'All Employees'
-              }}</span>
+              <span class="custom-select__label">{{ selectedEmployeeFilterLabel }}</span>
               <svg
                 class="custom-select__chevron"
                 width="14"
@@ -367,6 +365,22 @@
                 All Employees
               </button>
               <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.employee === '__ME__' }"
+                @click="selectLeaveFilterEmployee('__ME__')"
+              >
+                MY REQUESTS
+              </button>
+              <button
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.employee === '__MEMBERS__' }"
+                @click="selectLeaveFilterEmployee('__MEMBERS__')"
+              >
+                REQUESTS SENT BY MEMBERS
+              </button>
+              <button
                 v-for="employee in leaveEmployees"
                 :key="employee"
                 type="button"
@@ -379,7 +393,7 @@
             </div>
           </div>
 
-          <div ref="filterDeptDropdownRef" class="field admin-filter-field custom-select">
+          <div v-if="isHr" ref="filterDeptDropdownRef" class="field admin-filter-field custom-select">
             <label class="mono-label">Filter by Department</label>
             <button
               type="button"
@@ -485,7 +499,7 @@
 
         <div v-if="!displayedLeaveRequests.length" class="vouchers-empty">
           <p class="vouchers-empty__title">No leave requests</p>
-          <p class="vouchers-empty__sub">{{ isHr ? 'Leave requests from all employees will appear here.' : (isAdmin ? 'Leave requests from users you onboarded will appear here.' : 'Your leave requests will appear here.') }}</p>
+          <p class="vouchers-empty__sub">{{ isHr ? 'Leave requests from all employees will appear here.' : (isAdmin ? 'Leave requests from department members will appear here.' : 'Your leave requests will appear here.') }}</p>
         </div>
 
         <table v-else class="vouchers-table">
@@ -498,7 +512,7 @@
               <th>Leave Type</th>
               <th class="reason-col">Reason</th>
               <th>Attachments</th>
-              <th class="text-center">{{ isAdmin ? 'Action' : 'Status' }}</th>
+              <th class="text-center">{{ isAdmin && !isHr ? 'Action' : 'Status' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -536,7 +550,7 @@
                 <template v-else>—</template>
               </td>
               <td class="text-center">
-                <template v-if="isAdmin">
+                <template v-if="isAdmin && !isHr">
                   <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && !leave.submitterIsAdmin">
                     <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
                       <button class="btn btn-approve" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Approved')">Approve</button>
@@ -751,10 +765,23 @@ const leaveDepartments = computed(() =>
   [...new Set(baseLeaveRequests.value.map((leave) => leave.department).filter(Boolean))].sort(),
 )
 
+const selectedEmployeeFilterLabel = computed(() => {
+  if (leaveFilter.employee === '') return 'All Employees'
+  if (leaveFilter.employee === '__ME__') return 'MY REQUESTS'
+  if (leaveFilter.employee === '__MEMBERS__') return 'REQUESTS SENT BY MEMBERS'
+  return leaveFilter.employee
+})
+
 const displayedLeaveRequests = computed(() => {
+  const myEmail = String(userEmail.value || '').toLowerCase()
   return baseLeaveRequests.value.filter(
     (leave) =>
-      (!leaveFilter.employee || leave.employeeName === leaveFilter.employee) &&
+      (!leaveFilter.employee ||
+        (leaveFilter.employee === '__ME__'
+          ? String(leave.submittedBy || '').toLowerCase() === myEmail
+          : leaveFilter.employee === '__MEMBERS__'
+            ? String(leave.submittedBy || '').toLowerCase() !== myEmail
+            : leave.employeeName === leaveFilter.employee)) &&
       (!leaveFilter.status || (leave.status || 'Pending').toLowerCase() === leaveFilter.status) &&
       (!leaveFilter.department || leave.department === leaveFilter.department),
   )
