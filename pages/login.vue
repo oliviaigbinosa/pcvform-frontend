@@ -9,7 +9,7 @@
       <p class="login-card__sub">Petty Cash Voucher System</p>
 
       <div v-if="showLogoutMessage" class="logout-success-block">
-        <p class="logout-success-text">You have logged out successfully. Log back in?</p>
+        <p class="logout-success-text">You have signed out successfully. Sign back in?</p>
       </div>
 
       <form class="login-form" @submit.prevent="handleLogin" novalidate>
