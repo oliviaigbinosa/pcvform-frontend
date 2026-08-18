@@ -6,7 +6,7 @@
         <p class="vouchers-sub">
           {{
             activeTab === 'vouchers'
-              ? filteredAdminVouchers.length + ' submitted voucher' + (filteredAdminVouchers.length !== 1 ? 's' : '') + ' across all users'
+              ? filteredAdminVouchers.length + ' submitted voucher' + (filteredAdminVouchers.length !== 1 ? 's' : '') + ' across all ' + (isSuperAdmin ? 'employees' : 'department members')
               : 'Manage user access and onboarding'
           }}
         </p>
@@ -159,6 +159,10 @@
             <span class="mono-label">Total Amount</span>
             <span class="amount-total serif">₦{{ selectedVoucher.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00' }}</span>
           </div>
+
+          <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
+            Processed by {{ selectedVoucher.processedBy }}
+          </p>
         </div>
       </div>
 
@@ -391,15 +395,15 @@
         </button>
       </div>
       <div class="onboarding-form card">
-        <h2 class="onboarding-form__title serif">Onboard New User</h2>
-        <p class="onboarding-form__sub">Add a user to grant access to the voucher system.</p>
+        <h2 class="onboarding-form__title serif">{{ isSuperAdmin ? 'Onboard new employee' : 'Onboard new member' }}</h2>
+        <p class="onboarding-form__sub">{{ isSuperAdmin ? 'Add an employee to grant access to this voucher system.' : 'Add a department member to grant access to this voucher system.' }}</p>
         <form class="onboarding-form__fields" @submit.prevent="handleAddUser">
           <div class="field onboarding-field">
             <label class="mono-label">Email Address </label>
             <input
               v-model="onboardForm.email"
               type="email"
-              placeholder="user@getpayedmail.com"
+              placeholder="firstname.lastname@getpayedmail.com"
               :class="{ error: onboardErrors.email }"
               @input="onboardForm.email = $event.target.value.toLowerCase(); delete onboardErrors.email"
             />
@@ -515,7 +519,7 @@
               :class="{ error: onboardErrors.role }"
               @click.stop="onboardRoleDropdownOpen = !onboardRoleDropdownOpen"
             >
-              <span class="custom-select__label">{{ onboardForm.role ? onboardForm.role.charAt(0).toUpperCase() + onboardForm.role.slice(1) : 'Select role' }}</span>
+              <span class="custom-select__label">{{ getRoleDisplayText(onboardForm.role) }}</span>
               <svg
                 class="custom-select__chevron"
                 width="14"
@@ -545,18 +549,19 @@
                 :class="{ selected: onboardForm.role === 'user' }"
                 @click="selectOnboardRole('user')"
               >
-                User
+                Department member
               </button>
               <button
+                v-if="onboardForm.department.toLowerCase() !== 'finance'"
                 type="button"
                 class="custom-select__option"
                 :class="{ selected: onboardForm.role === 'admin' }"
                 @click="selectOnboardRole('admin')"
               >
-                Admin
+                Department manager
               </button>
             </div>
-            <span v-if="onboardErrors.role" class="err-msg">{{ onboardErrors.role }}</span>
+              <span v-if="onboardErrors.role" class="err-msg err-msg--absolute">{{ onboardErrors.role }}</span>
           </div>
           <span v-if="onboardErrors.general" class="err-msg">{{ onboardErrors.general }}</span>
           <button type="submit" class="btn btn-primary onboarding-submit" :disabled="addingUser">
@@ -586,7 +591,7 @@
           :aria-selected="onboardingListTab === 'users'"
           @click="onboardingListTab = 'users'"
         >
-          Users
+          Department members
         </button>
         <button
           role="tab"
@@ -595,7 +600,7 @@
           :aria-selected="onboardingListTab === 'admins'"
           @click="onboardingListTab = 'admins'"
         >
-          Admins
+          Department managers
         </button>
       </nav>
 
@@ -924,14 +929,11 @@ const displayedOnboardingUsers = computed(() => {
 
 const adminBaseVouchers = computed(() => {
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => user.email.toLowerCase()))
+  const current = String(userEmail.value || '').toLowerCase()
   return [...allVouchers.value].reverse().filter((voucher) => {
     const submitted = String(voucher.submittedBy || '').toLowerCase()
-    const current = userEmail.value.toLowerCase()
-    if (submitted === current) return false
-    if (!isSuperAdmin.value) {
-      return onboardedEmails.has(submitted)
-    }
-    return true
+    if (isSuperAdmin.value) return true
+    return submitted === current || onboardedEmails.has(submitted)
   })
 })
 const adminDepts = computed(() =>
@@ -975,6 +977,11 @@ function selectStatus(status) {
 function selectOnboardDept(dept) {
   onboardForm.department = dept
   delete onboardErrors.department
+  // Clear role when Finance is selected since backend auto-assigns
+  if (dept.toLowerCase() === 'finance') {
+    onboardForm.role = ''
+    delete onboardErrors.role
+  }
   onboardDeptDropdownOpen.value = false
 }
 
@@ -983,6 +990,21 @@ function selectOnboardRole(role) {
   delete onboardErrors.role
   onboardRoleDropdownOpen.value = false
 }
+
+function getRoleDisplayText(role) {
+  if (!role) return 'Select role'
+  if (role === 'user') return 'Department member'
+  if (role === 'admin') return 'Department manager'
+  return role.charAt(0).toUpperCase() + role.slice(1)
+}
+
+// Watch for department changes to clear role for Finance
+watch(() => onboardForm.department, (newDept) => {
+  if (newDept.toLowerCase() === 'finance') {
+    onboardForm.role = ''
+    delete onboardErrors.role
+  }
+})
 
 function openCreateDeptModal() {
   newDepartment.value = ''
@@ -1135,16 +1157,23 @@ async function handleAddUser() {
   delete onboardErrors.role
   delete onboardErrors.general
 
-  if (!isOnboardEmail(onboardForm.email, onboardForm.role)) {
-    onboardErrors.email = onboardForm.role === 'super admin'
-      ? 'Email must be a @getpayedmail.com address'
-      : 'Email must use a dot separator and be a @getpayedmail.com address'
+  if (!onboardForm.email) {
+    onboardErrors.email = 'Email is required'
+  } else if (!/@getpayedmail\.com$/.test(onboardForm.email)) {
+    onboardErrors.email = 'Email must end with @getpayedmail.com'
+  } else if (!/^[^\s@.]+\.[^\s@.]+@getpayedmail\.com$/.test(onboardForm.email)) {
+    onboardErrors.email = 'Enter a valid email'
   }
   if (!onboardForm.department) {
-    onboardErrors.department = 'Please select a department'
+    onboardErrors.department = 'Department is required'
   }
-  if (userRole.value === 'super admin' && !onboardForm.role) {
-    onboardErrors.role = 'Please select a role'
+  // Role is only required for super admins when not Finance (auto-assigned for Finance)
+  if (userRole.value === 'super admin' && !onboardForm.role && onboardForm.department.toLowerCase() !== 'finance') {
+    onboardErrors.role = 'Role is required'
+  }
+  // Validate: Finance department members cannot be department managers
+  if (onboardForm.department.toLowerCase() === 'finance' && onboardForm.role === 'admin') {
+    onboardErrors.role = 'Select the appropriate role'
   }
   if (Object.keys(onboardErrors).length) return
 
@@ -1152,7 +1181,9 @@ async function handleAddUser() {
   addingUser.value = true
   let newUser = null
   try {
-    newUser = await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, onboardForm.role)
+    // For Finance department, pass empty role and let backend auto-assign
+    const roleToSubmit = onboardForm.department.toLowerCase() === 'finance' ? '' : onboardForm.role
+    newUser = await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, roleToSubmit)
     await sendInviteEmail(onboardForm.email, password, userEmail.value)
     onboardForm.email = ''
     onboardForm.department = isSuperAdmin.value ? '' : (userDepartment.value || '')
@@ -1249,6 +1280,23 @@ async function handleRemoveUser(id) {
 
 .onboarding-field {
   min-width: 160px;
+  position: relative;
+  min-height: 75px;
+}
+
+.onboarding-form__fields {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.onboarding-submit {
+  transform: translateY(-18px);
+}
+
+.onboarding-field input[type="email"] {
+  font-size: 13px;
 }
 
 .onboarding-field select {
@@ -1436,5 +1484,20 @@ async function handleRemoveUser(id) {
     -webkit-line-clamp: 1;
     line-clamp: 1;
   }
+}
+
+.err-msg--absolute {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  white-space: nowrap;
+}
+
+.processed-by {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-fg);
+  font-size: 12px;
 }
 </style>

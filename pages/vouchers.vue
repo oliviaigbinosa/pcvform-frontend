@@ -29,7 +29,7 @@
         <div v-else-if="isToMe && selectedVoucher.status === 'Approved' && !selectedVoucher.submitterIsAdmin" class="approve-message card success">
           This voucher has been approved
         </div>
-        <div v-else-if="isSuperAdmin && ((isToMe && selectedVoucher.submitterIsAdmin && (selectedVoucher.status === 'Pending' || selectedVoucher.status === 'Approved')) || (isCcMe && selectedVoucher.status === 'Approved'))" class="approve-actions-bar">
+        <div v-else-if="canSuperAdminAct" class="approve-actions-bar">
           <button class="btn btn-primary" :disabled="processing" style="background: #314668;" @click="showProcessModal = true">
             {{ processing && processingAction === 'process' ? 'Processing…' : 'Process' }}
           </button>
@@ -132,6 +132,10 @@
           <span class="mono-label">Total Amount</span>
           <span class="amount-total serif">₦{{ selectedVoucher.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00' }}</span>
         </div>
+
+        <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
+          Processed by {{ selectedVoucher.processedBy }}
+        </p>
       </div>
     </div>
 
@@ -304,7 +308,7 @@ import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import FilePreview from '../components/FilePreview.vue'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
-import { allVouchers, loadingVouchers, userEmail, userRole, API_BASE, updateVoucherStatus } from '~/composables/appState'
+import { allVouchers, loadingVouchers, userEmail, userRole, updateVoucherStatus } from '~/composables/appState'
 
 const router = useRouter()
 const selectedVoucher = ref(null)
@@ -315,6 +319,32 @@ const processing = ref(false)
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const processingAction = ref('')
 const declineAction = ref('decline')
+const FINANCE_EMAIL = 'finance@getpayedmail.com'
+
+const isFinanceRecipient = computed(() => {
+  if (!selectedVoucher.value) return false
+  const email = userEmail.value.toLowerCase()
+  const recipients = selectedVoucher.value.financeSuperAdminRecipients || []
+  if (recipients.some((recipient) => String(recipient).toLowerCase() === email)) {
+    return true
+  }
+  if (!isSuperAdmin.value) return false
+  const to = String(selectedVoucher.value.to || '').toLowerCase()
+  const cc = String(selectedVoucher.value.cc || '').toLowerCase()
+  return to === FINANCE_EMAIL || cc === FINANCE_EMAIL
+})
+
+const canSuperAdminAct = computed(() => {
+  if (!selectedVoucher.value || !isSuperAdmin.value) return false
+  const voucher = selectedVoucher.value
+  const status = voucher.status || 'Pending'
+  const isRecipient = isToMe.value || isCcMe.value || isFinanceRecipient.value
+  if (!isRecipient) return false
+  if (voucher.submitterIsAdmin && (status === 'Pending' || status === 'Approved')) return true
+  if (status === 'Approved') return true
+  return false
+})
+
 const isToMe = computed(() =>
   Boolean(selectedVoucher.value && String(selectedVoucher.value.to).toLowerCase() === userEmail.value.toLowerCase()),
 )
@@ -342,39 +372,12 @@ async function setDecision(status) {
   await updateVoucherStatus(selectedVoucher.value.id, status)
 }
 
-async function notifyCcOfApproval() {
-  if (!selectedVoucher.value?.cc) return
-  try {
-    await fetch(`${API_BASE}/api/email/send-approved-cc`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cc: selectedVoucher.value.cc,
-        voucherNo: selectedVoucher.value.id,
-        from: selectedVoucher.value.from,
-        to: selectedVoucher.value.to,
-        subject: selectedVoucher.value.subject,
-        submittedBy: selectedVoucher.value.submittedBy,
-        amount: selectedVoucher.value.amount,
-        payee: selectedVoucher.value.payee,
-        department: selectedVoucher.value.department,
-        purpose: selectedVoucher.value.purpose,
-        submissionDate: selectedVoucher.value.submissionDate,
-        supportingDocs: selectedVoucher.value.supportingDocs,
-      }),
-    })
-  } catch (error) {
-    console.error('Failed to send CC approval email:', error)
-  }
-}
-
 async function confirmApprove() {
   if (processing.value) return
   processing.value = true
   processingAction.value = 'approve'
   try {
     await setDecision('Approved')
-    await notifyCcOfApproval()
   } finally {
     processing.value = false
     processingAction.value = ''
@@ -437,8 +440,16 @@ const receivedVouchers = computed(() =>
     const email = userEmail.value.toLowerCase()
     const toMatch = String(voucher.to).toLowerCase() === email
     const ccMatch = String(voucher.cc).toLowerCase() === email
+    const financeRecipient =
+      (voucher.financeSuperAdminRecipients || []).some(
+        (recipient) => String(recipient).toLowerCase() === email,
+      ) ||
+      (isSuperAdmin.value &&
+        (String(voucher.to).toLowerCase() === FINANCE_EMAIL ||
+          String(voucher.cc).toLowerCase() === FINANCE_EMAIL))
     return (
       toMatch ||
+      financeRecipient ||
       (ccMatch && ['Approved', 'Processed', 'Rejected'].includes(voucher.status || ''))
     )
   }),
@@ -501,6 +512,14 @@ const displayedVouchers = computed(() =>
 .page-wrap > .dashboard-tabs .dashboard-tabs__tab {
   flex: 1;
   justify-content: center;
+}
+
+.processed-by {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-fg);
+  font-size: 12px;
 }
 
 @media (max-width: 768px) {
