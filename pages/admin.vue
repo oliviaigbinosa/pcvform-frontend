@@ -396,7 +396,7 @@
 
     <!-- User Onboarding tab -->
     <div v-else role="tabpanel">
-      <div v-if="isSuperAdmin" class="onboarding-actions" style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+      <div v-if="hasFullVisibility" class="onboarding-actions" style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
         <button type="button" class="btn btn-accent" @click="openCreateDeptModal" style="gap: 6px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -406,8 +406,8 @@
         </button>
       </div>
       <div class="onboarding-form card">
-        <h2 class="onboarding-form__title serif">{{ isSuperAdmin ? 'Onboard new employee' : 'Onboard new member' }}</h2>
-        <p class="onboarding-form__sub">{{ isSuperAdmin ? 'Add an employee to grant access to this voucher system.' : 'Add a department member to grant access to this voucher system.' }}</p>
+        <h2 class="onboarding-form__title serif">{{ hasFullVisibility ? 'Onboard new employee' : 'Onboard new member' }}</h2>
+        <p class="onboarding-form__sub">{{ hasFullVisibility ? 'Add an employee to grant access to this voucher system.' : 'Add a department member to grant access to this voucher system.' }}</p>
         <form class="onboarding-form__fields" @submit.prevent="handleAddUser">
           <div class="field onboarding-field">
             <label class="mono-label">Email Address </label>
@@ -420,7 +420,7 @@
             />
             <span v-if="onboardErrors.email" class="err-msg">{{ onboardErrors.email }}</span>
           </div>
-          <div v-if="isSuperAdmin" ref="onboardDeptDropdownRef" class="field onboarding-field custom-select">
+          <div v-if="hasFullVisibility" ref="onboardDeptDropdownRef" class="field onboarding-field custom-select">
             <label class="mono-label">Department </label>
             <button
               type="button"
@@ -864,6 +864,7 @@ watch(onboardingListTab, (value) => {
 
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const isFinanceManager = computed(() => userEmail.value === 'gbemisola.olajide@getpayedmail.com')
+const hasFullVisibility = computed(() => isSuperAdmin.value || isFinanceManager.value)
 const canViewTabs = computed(() => isSuperAdmin.value || isFinanceManager.value)
 const selectedVoucher = ref(null)
 const addingUser = ref(false)
@@ -1197,8 +1198,8 @@ async function handleAddUser() {
   if (!onboardForm.department) {
     onboardErrors.department = 'Department is required'
   }
-  // Role is only required for super admins when not Finance (auto-assigned for Finance)
-  if (userRole.value === 'super admin' && !onboardForm.role && onboardForm.department.toLowerCase() !== 'finance') {
+  // Role is only required for super admins / finance manager when not Finance (auto-assigned for Finance)
+  if ((userRole.value === 'super admin' || isFinanceManager.value) && !onboardForm.role && onboardForm.department.toLowerCase() !== 'finance') {
     onboardErrors.role = 'Role is required'
   }
   // Validate: Finance department members cannot be department managers
