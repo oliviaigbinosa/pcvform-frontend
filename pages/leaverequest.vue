@@ -801,31 +801,68 @@ function parseDate(value) {
   return new Date(year, month - 1, day)
 }
 
-function validate() {
+async function validateManagerEmail(manager) {
+  const managerEmail = manager.trim().toLowerCase()
+  const myEmail = String(userEmail.value || '').toLowerCase()
+
+  if (!managerEmail) {
+    return { valid: false, error: 'Department manager is required' }
+  }
+  if (managerEmail.indexOf('@') <= 0) {
+    return { valid: false, error: 'Enter a valid email address' }
+  }
+  if (!/^[^\s@]+@getpayedmail\.com$/.test(managerEmail)) {
+    return { valid: false, error: 'Manager email must be a getpayedmail.com address' }
+  }
+  if (managerEmail === myEmail) {
+    return { valid: false, error: 'Invalid email' }
+  }
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/admin/validate-manager-email?email=${encodeURIComponent(managerEmail)}`,
+      {
+        headers: {
+          'x-admin-email': userEmail.value,
+          'x-user-email': userEmail.value,
+        },
+      },
+    )
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { valid: false, error: data.error || 'Failed to validate email' }
+    }
+    const data = await res.json()
+    if (!data.valid) {
+      return { valid: false, error: data.error || 'Invalid department manager' }
+    }
+    return { valid: true }
+  } catch {
+    const adminEmailSet = new Set(adminEmails.value.map((email) => String(email || '').toLowerCase()))
+    const userEmailSet = new Set(userEmails.value.map((email) => String(email || '').toLowerCase()))
+    if (userEmailSet.has(managerEmail)) {
+      return { valid: false, error: 'This user is not a department manager' }
+    }
+    if (!adminEmailSet.has(managerEmail)) {
+      return { valid: false, error: 'This user has not been onboarded yet' }
+    }
+    return { valid: true }
+  }
+}
+
+async function validate() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   errors.employeeName = form.employeeName.trim() ? '' : 'Employee name is required'
-  const manager = form.departmentManager.trim()
-  const adminEmailSet = new Set(adminEmails.value.map((email) => String(email || '').toLowerCase()))
-  const userEmailSet = new Set(userEmails.value.map((email) => String(email || '').toLowerCase()))
-  if (!manager) {
-    errors.departmentManager = 'Department manager is required'
-  } else if (manager.indexOf('@') <= 0) {
-    errors.departmentManager = 'Enter a valid email address'
-  } else if (isAdmin.value || isSuperAdmin.value) {
-    if (userEmailSet.has(manager.toLowerCase())) {
-      errors.departmentManager = 'This user is not a department manager'
-    } else if (!adminEmailSet.has(manager.toLowerCase())) {
-      errors.departmentManager = 'This user has not been onboarded yet'
-    } else if (!/^[^\s@]+@getpayedmail\.com$/.test(manager.toLowerCase())) {
-      errors.departmentManager = 'Manager email must be a getpayedmail.com address'
-    } else {
-      errors.departmentManager = ''
-    }
+
+  if (isAdmin.value || isSuperAdmin.value) {
+    const managerResult = await validateManagerEmail(form.departmentManager)
+    errors.departmentManager = managerResult.valid ? '' : (managerResult.error || 'Invalid department manager')
   } else {
     errors.departmentManager = ''
   }
+
   errors.department = form.department ? '' : 'Department is required'
   errors.leaveType = form.leaveType ? '' : 'Leave type is required'
 
@@ -847,8 +884,8 @@ function validate() {
   return Object.values(errors).every((e) => !e)
 }
 
-function openPreview() {
-  if (validate()) showPreview.value = true
+async function openPreview() {
+  if (await validate()) showPreview.value = true
 }
 
 function clearErr(key) {
@@ -997,7 +1034,7 @@ function viewRequests() {
 }
 
 async function submitLeave() {
-  if (!validate()) return
+  if (!(await validate())) return
   if (submitting.value) return
   submitting.value = true
   try {

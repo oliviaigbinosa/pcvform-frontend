@@ -105,7 +105,7 @@
 .logout-success-block {
   background: linear-gradient(to right, #1c3557 5px, #f3f4f6 5px);
   border-radius: 0;
-  padding: 12px 16px;
+  padding: 12px 23px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;

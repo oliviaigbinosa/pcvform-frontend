@@ -316,7 +316,7 @@ const FINANCE_EMAIL = 'finance@getpayedmail.com'
 const FINANCE_MANAGER_EMAIL = 'mfon.jackson@getpayedmail.com'
 
 function defaultToEmail() {
-  if (userRole.value === 'super admin') return FINANCE_MANAGER_EMAIL
+  if (userRole.value === 'super admin') return FINANCE_EMAIL
   if (isAdmin.value) return FINANCE_EMAIL
   return userCreatedBy.value || ''
 }

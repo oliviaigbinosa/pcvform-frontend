@@ -931,11 +931,15 @@ const adminFilter = reactive({ dept: '', user: '', status: '' })
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 
 const displayedOnboardingUsers = computed(() => {
-  if (!isSuperAdmin.value) return onboardingUsers.value
+  const financeManagerEmail = 'mfon.jackson@getpayedmail.com'
+  const filtered = onboardingUsers.value.filter(
+    (user) => String(user.email || '').toLowerCase() !== financeManagerEmail,
+  )
+  if (!isSuperAdmin.value) return filtered
   if (onboardingListTab.value === 'admins') {
-    return onboardingUsers.value.filter((user) => user.role === 'admin')
+    return filtered.filter((user) => user.role === 'admin')
   }
-  return onboardingUsers.value.filter((user) => user.role === 'user' || user.role === 'super admin')
+  return filtered.filter((user) => user.role === 'user' || user.role === 'super admin')
 })
 
 const adminBaseVouchers = computed(() => {

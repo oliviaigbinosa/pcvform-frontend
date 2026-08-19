@@ -452,32 +452,43 @@ const receivedVouchers = computed(() =>
     const email = userEmail.value.toLowerCase()
     const toMatch = String(voucher.to).toLowerCase() === email
     const ccMatch = String(voucher.cc).toLowerCase() === email
-    const financeRecipient =
+    const financeSuperAdminMatch =
       (voucher.financeSuperAdminRecipients || []).some(
         (recipient) => String(recipient).toLowerCase() === email,
       ) ||
       (isSuperAdmin.value &&
         (String(voucher.to).toLowerCase() === FINANCE_EMAIL ||
           String(voucher.cc).toLowerCase() === FINANCE_EMAIL))
-    const isMatch =
-      toMatch ||
-      financeRecipient ||
-      (ccMatch && ['Approved', 'Processed', 'Rejected'].includes(voucher.status || ''))
-    if (isMatch && isSuperAdmin.value) {
-      return (
-        (voucher.status || '').toLowerCase() === 'approved' ||
-        voucher.status === 'Processed' ||
-        voucher.status === 'Rejected'
-      )
+
+    const ccApprovalsMatch =
+      ccMatch && ['Approved', 'Processed', 'Rejected', 'Declined'].includes(voucher.status || '')
+
+    const isMatch = toMatch || financeSuperAdminMatch || ccApprovalsMatch
+    if (!isMatch) return false
+
+    if (isSuperAdmin.value) {
+      const status = voucher.status || 'Pending'
+      const isAdminSubmitted = voucher.submitterIsAdmin
+      if (toMatch) {
+        return ['Processed', 'Rejected', 'Declined'].includes(status) ||
+          (isAdminSubmitted && status === 'Pending')
+      }
+      if (isAdminSubmitted) {
+        return status === 'Pending' || status === 'Processed' || status === 'Rejected'
+      }
+      return status === 'Approved' || status === 'Processed' || status === 'Rejected'
     }
-    return isMatch
+
+    return true
   }),
 )
 
 function displayStatusOf(voucher) {
   if (!voucher) return 'Pending'
-  if (isSuperAdmin.value && activeTab.value === 'received' && voucher.status === 'Approved') {
-    return 'Pending'
+  if (isSuperAdmin.value && activeTab.value === 'received') {
+    const status = voucher.status || 'Pending'
+    if (voucher.submitterIsAdmin && status === 'Pending') return 'Pending'
+    if (status === 'Approved') return 'Pending'
   }
   return voucher.status || 'Pending'
 }
