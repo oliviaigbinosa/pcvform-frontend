@@ -551,7 +551,7 @@
               </td>
               <td class="text-center">
                 <template v-if="shouldShowAdminUi && !isHr">
-                  <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && !leave.submitterIsAdmin">
+                  <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && (!leave.submitterIsAdmin || isManager(leave))">
                     <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
                       <button class="btn btn-approve" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Approved')">Approve</button>
                       <button class="btn btn-decline" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Declined')">Decline</button>
@@ -745,10 +745,9 @@ const baseLeaveRequests = computed(() => {
   if (isFinanceManager.value) {
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
-      const department = String(leave.department || '').toLowerCase()
       return (
         submittedBy === myEmail ||
-        department === 'finance' ||
+        onboardedEmails.has(submittedBy) ||
         isManager(leave)
       )
     })
