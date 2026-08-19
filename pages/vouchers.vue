@@ -463,7 +463,7 @@ const receivedVouchers = computed(() =>
         (recipient) => String(recipient).toLowerCase() === email,
       )
 
-    if (email === FINANCE_MANAGER_EMAIL) {
+    if (email === FINANCE_MANAGER_EMAIL.toLowerCase()) {
       if (financeRouted && submittedBy === email) return true
       return toMatch || ccMatch || financeSuperAdminMatch
     }

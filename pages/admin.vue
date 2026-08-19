@@ -863,7 +863,9 @@ watch(onboardingListTab, (value) => {
 })
 
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
-const isFinanceManager = computed(() => userEmail.value === 'gbemisola.olajide@getpayedmail.com')
+const isFinanceManager = computed(
+  () => String(userEmail.value || '').toLowerCase() === 'gbemisola.olajide@getpayedmail.com',
+)
 const hasFullVisibility = computed(() => isSuperAdmin.value || isFinanceManager.value)
 const canViewTabs = computed(() => isSuperAdmin.value || isFinanceManager.value)
 const selectedVoucher = ref(null)
