@@ -367,7 +367,7 @@
                 <td>
                   <div class="admin-user-cell">
                     <span class="admin-user-avatar">{{
-                      voucher.submittedBy.charAt(0).toUpperCase()
+                      getUserInitials(voucher.submittedBy)
                     }}</span>
                     <span class="admin-user-email">{{ voucher.submittedBy }}</span>
                   </div>
@@ -522,7 +522,7 @@
             />
             <span v-if="onboardErrors.department" class="err-msg">{{ onboardErrors.department }}</span>
           </div>
-          <div v-if="isSuperAdmin" ref="onboardRoleDropdownRef" class="field onboarding-field custom-select">
+          <div v-if="canViewTabs" ref="onboardRoleDropdownRef" class="field onboarding-field custom-select">
             <label class="mono-label">Role </label>
             <button
               type="button"
@@ -594,7 +594,7 @@
         </form>
       </div>
 
-      <nav v-if="isSuperAdmin" class="dashboard-tabs onboarding-list-tabs" role="tablist" aria-label="Onboarded users">
+      <nav v-if="canViewTabs" class="dashboard-tabs onboarding-list-tabs" role="tablist" aria-label="Onboarded users">
         <button
           role="tab"
           class="dashboard-tabs__tab"
@@ -630,7 +630,7 @@
           <line x1="20" y1="8" x2="20" y2="14" />
           <line x1="23" y1="11" x2="17" y2="11" />
         </svg>
-        <p class="vouchers-empty__title">No {{ isSuperAdmin ? onboardingListTab : 'users' }} onboarded yet</p>
+        <p class="vouchers-empty__title">No {{ canViewTabs ? onboardingListTab : 'users' }} onboarded yet</p>
         <p class="vouchers-empty__sub">Add users above to grant them access to the system.</p>
       </div>
 
@@ -651,7 +651,7 @@
               <td class="text-center text-muted">{{ index + 1 }}</td>
               <td>
                 <div class="admin-user-cell">
-                  <span class="admin-user-avatar">{{ user.email.charAt(0).toUpperCase() }}</span>
+                  <span class="admin-user-avatar">{{ getUserInitials(user.email) }}</span>
                   <span class="admin-user-email">{{ user.email }}</span>
                 </div>
               </td>
@@ -861,6 +861,10 @@ const onboardingListTab = ref('users')
 watch(onboardingListTab, (value) => {
   localStorage.setItem('pcv_onboarding_list_tab', value)
 })
+
+const isSuperAdmin = computed(() => userRole.value === 'super admin')
+const isFinanceManager = computed(() => userEmail.value === 'gbemisola.olajide@getpayedmail.com')
+const canViewTabs = computed(() => isSuperAdmin.value || isFinanceManager.value)
 const selectedVoucher = ref(null)
 const addingUser = ref(false)
 const removingUserId = ref('')
@@ -897,7 +901,11 @@ function togglePurpose(id) {
 
 const onboardForm = reactive({
   email: '',
-  department: userRole.value !== 'super admin' ? (userDepartment.value || '') : '',
+  department: (() => {
+    if (userEmail.value === 'gbemisola.olajide@getpayedmail.com') return 'Finance'
+    if (userRole.value !== 'super admin') return userDepartment.value || ''
+    return ''
+  })(),
   role: '',
 })
 const onboardErrors = reactive({})
@@ -920,7 +928,9 @@ onMounted(async () => {
   } catch {
     // Department stays empty if the fetch fails
   }
-  if (userRole.value !== 'super admin') {
+  if (isFinanceManager.value) {
+    onboardForm.department = 'Finance'
+  } else if (userRole.value !== 'super admin') {
     onboardForm.department = userDepartment.value || ''
   }
   window.addEventListener('click', closeDropdowns)
@@ -928,14 +938,12 @@ onMounted(async () => {
 
 const adminFilter = reactive({ dept: '', user: '', status: '' })
 
-const isSuperAdmin = computed(() => userRole.value === 'super admin')
-
 const displayedOnboardingUsers = computed(() => {
-  const financeManagerEmail = 'mfon.jackson@getpayedmail.com'
+  const financeManagerEmail = 'gbemisola.olajide@getpayedmail.com'
   const filtered = onboardingUsers.value.filter(
     (user) => String(user.email || '').toLowerCase() !== financeManagerEmail,
   )
-  if (!isSuperAdmin.value) return filtered
+  if (!canViewTabs.value) return filtered
   if (onboardingListTab.value === 'admins') {
     return filtered.filter((user) => user.role === 'admin')
   }
@@ -972,6 +980,13 @@ function formatStatus(status) {
 
 function formatDate(date) {
   return date ? new Date(date).toLocaleDateString('en-CA') : '—'
+}
+
+function getUserInitials(email) {
+  if (!email) return ''
+  const [local] = email.split('@')
+  const parts = local.split(/[.\-_]+/).filter(Boolean)
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('')
 }
 
 function selectDept(dept) {
@@ -1201,7 +1216,13 @@ async function handleAddUser() {
     newUser = await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, roleToSubmit)
     await sendInviteEmail(onboardForm.email, password, userEmail.value)
     onboardForm.email = ''
-    onboardForm.department = isSuperAdmin.value ? '' : (userDepartment.value || '')
+    if (isFinanceManager.value) {
+      onboardForm.department = 'Finance'
+    } else if (isSuperAdmin.value) {
+      onboardForm.department = ''
+    } else {
+      onboardForm.department = userDepartment.value || ''
+    }
     onboardForm.role = ''
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to add user'

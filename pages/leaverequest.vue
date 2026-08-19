@@ -38,7 +38,7 @@
 
     </div>
 
-    <nav v-if="!isFinanceManager" class="dashboard-tabs" role="tablist" aria-label="Leave request tabs">
+    <nav class="dashboard-tabs" role="tablist" aria-label="Leave request tabs">
       <button
         role="tab"
         class="dashboard-tabs__tab"
@@ -59,7 +59,7 @@
       </button>
     </nav>
 
-    <div v-if="activeTab === 'form' && !isFinanceManager" class="leave-form-wrap">
+    <div v-if="activeTab === 'form'" class="leave-form-wrap">
       <div v-if="submitted" class="card success-card">
         <div class="success-icon">✓</div>
         <h2 class="serif">Leave Request Submitted</h2>
@@ -87,7 +87,7 @@
   type="text"
   v-model="form.departmentManager"
   placeholder="Enter department manager email"
-  :readonly="!isAdmin || isSuperAdmin"
+  :readonly="!isAdmin || (isSuperAdmin && !isFinanceManager)"
   :error="errors.departmentManager"
   @input="clearErr('departmentManager')"
 />
@@ -627,7 +627,7 @@ import {
 } from '~/composables/appState'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 
-const FINANCE_MANAGER_EMAIL = 'mfon.jackson@getpayedmail.com'
+const FINANCE_MANAGER_EMAIL = 'gbemisola.olajide@getpayedmail.com'
 const showPreview = ref(false)
 const showFilePreview = ref(false)
 const previewFile = ref(null)
@@ -639,7 +639,7 @@ const isFinanceManager = computed(() => String(userEmail.value || '').toLowerCas
 const isHr = computed(() => String(userEmail.value || '').toLowerCase() === 'chinenye.onyia@getpayedmail.com')
 const form = reactive({
   employeeName: '',
-  departmentManager: userRole.value === 'super admin' ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || ''),
+  departmentManager: userRole.value === 'super admin' && !isFinanceManager.value ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || ''),
   department: userRole.value === 'super admin' ? 'Finance' : (userDepartment.value || ''),
   leaveType: '',
   startDate: '',
@@ -688,10 +688,6 @@ async function fetchUserEmails() {
 }
 
 function setLeaveTab(tab) {
-  if (isFinanceManager.value) {
-    activeTab.value = 'requests'
-    return
-  }
   activeTab.value = tab
 }
 
@@ -744,7 +740,18 @@ const baseLeaveRequests = computed(() => {
   const isManager = (leave) => String(leave.departmentManager || '').toLowerCase() === myEmail
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
   if (isFinanceManager.value) {
-    return allLeaveRequests.value.filter((leave) => isManager(leave))
+    // For finance manager, show only leave requests from finance department members they onboarded
+    const financeOnboardedEmails = new Set(
+      onboardingUsers.value
+        .filter((user) => String(user.department || '').toLowerCase() === 'finance')
+        .map((user) => String(user.email || '').toLowerCase())
+    )
+    return allLeaveRequests.value.filter((leave) => {
+      const submittedBy = String(leave.submittedBy || '').toLowerCase()
+      const department = String(leave.department || '').toLowerCase()
+      // Show if: submitted by finance dept member they onboarded, OR they are the manager
+      return (financeOnboardedEmails.has(submittedBy) && department === 'finance') || isManager(leave)
+    })
   }
   if (canViewAll) {
     return allLeaveRequests.value.filter((leave) => {
@@ -982,11 +989,16 @@ onMounted(async () => {
       // ignore
     }
   }
-  form.departmentManager = isSuperAdmin.value ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || '')
-  form.department = isSuperAdmin.value ? 'Finance' : (userDepartment.value || '')
   if (isFinanceManager.value) {
-    activeTab.value = 'requests'
+    // Finance manager can edit department manager field
+    form.departmentManager = userCreatedBy.value || ''
+  } else if (isSuperAdmin.value) {
+    // Other super admins have readonly field with finance manager
+    form.departmentManager = FINANCE_MANAGER_EMAIL
+  } else {
+    form.departmentManager = userCreatedBy.value || ''
   }
+  form.department = isSuperAdmin.value ? 'Finance' : (userDepartment.value || '')
   window.addEventListener('click', closeDropdowns)
 })
 onBeforeUnmount(() => window.removeEventListener('click', closeDropdowns))
@@ -1013,9 +1025,18 @@ function openFilePreview(file) {
 }
 
 function resetForm() {
+  let deptManager
+  if (isFinanceManager.value) {
+    deptManager = userCreatedBy.value || ''
+  } else if (isSuperAdmin.value) {
+    deptManager = FINANCE_MANAGER_EMAIL
+  } else {
+    deptManager = userCreatedBy.value || ''
+  }
+  
   Object.assign(form, {
     employeeName: '',
-    departmentManager: isSuperAdmin.value ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || ''),
+    departmentManager: deptManager,
     department: isSuperAdmin.value ? 'Finance' : (userDepartment.value || ''),
     leaveType: '',
     startDate: '',

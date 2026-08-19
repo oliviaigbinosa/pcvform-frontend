@@ -313,10 +313,10 @@ import FilePreview from '../components/FilePreview.vue'
 import { addVoucher, userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers, API_BASE } from '~/composables/appState'
 
 const FINANCE_EMAIL = 'finance@getpayedmail.com'
-const FINANCE_MANAGER_EMAIL = 'mfon.jackson@getpayedmail.com'
+const FINANCE_MANAGER_EMAIL = 'gbemisola.olajide@getpayedmail.com'
 
 function defaultToEmail() {
-  if (userRole.value === 'super admin') return FINANCE_EMAIL
+  if (userRole.value === 'super admin' && userEmail.value !== FINANCE_MANAGER_EMAIL) return FINANCE_MANAGER_EMAIL
   if (isAdmin.value) return FINANCE_EMAIL
   return userCreatedBy.value || ''
 }

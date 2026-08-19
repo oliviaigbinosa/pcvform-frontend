@@ -332,6 +332,7 @@ const isAdminOrSuper = computed(() => userRole.value === 'admin' || userRole.val
 const processingAction = ref('')
 const declineAction = ref('decline')
 const FINANCE_EMAIL = 'finance@getpayedmail.com'
+const FINANCE_MANAGER_EMAIL = 'gbemisola.olajide@getpayedmail.com'
 
 const isFinanceRecipient = computed(() => {
   if (!selectedVoucher.value) return false
@@ -452,13 +453,29 @@ const receivedVouchers = computed(() =>
     const email = userEmail.value.toLowerCase()
     const toMatch = String(voucher.to).toLowerCase() === email
     const ccMatch = String(voucher.cc).toLowerCase() === email
+    const financeRouted = String(voucher.to).toLowerCase() === FINANCE_EMAIL || 
+                          String(voucher.cc).toLowerCase() === FINANCE_EMAIL
+    
+    // Special handling for finance manager
+    if (email === FINANCE_MANAGER_EMAIL) {
+      // Finance manager sees their own submitted vouchers when sent to finance@getpayedmail.com
+      const isOwnVoucher = String(voucher.submittedBy).toLowerCase() === email
+      const ownFinanceRouted = isOwnVoucher && financeRouted
+      
+      // Show their own finance-routed vouchers OR vouchers sent directly to them
+      if (ownFinanceRouted || toMatch) return true
+      
+      return false
+    }
+    
+    // For other super admins, they should NOT see finance-routed vouchers in received tab
+    // They only get email notifications
+    if (financeRouted && isSuperAdmin.value) return false
+    
     const financeSuperAdminMatch =
       (voucher.financeSuperAdminRecipients || []).some(
         (recipient) => String(recipient).toLowerCase() === email,
-      ) ||
-      (isSuperAdmin.value &&
-        (String(voucher.to).toLowerCase() === FINANCE_EMAIL ||
-          String(voucher.cc).toLowerCase() === FINANCE_EMAIL))
+      )
 
     const ccApprovalsMatch =
       ccMatch && ['Approved', 'Processed', 'Rejected', 'Declined'].includes(voucher.status || '')
