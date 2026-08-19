@@ -740,17 +740,12 @@ const baseLeaveRequests = computed(() => {
   const isManager = (leave) => String(leave.departmentManager || '').toLowerCase() === myEmail
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
   if (isFinanceManager.value) {
-    const financeOnboardedEmails = new Set(
-      onboardingUsers.value
-        .filter((user) => String(user.department || '').toLowerCase() === 'finance')
-        .map((user) => String(user.email || '').toLowerCase())
-    )
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
       const department = String(leave.department || '').toLowerCase()
       return (
         submittedBy === myEmail ||
-        (financeOnboardedEmails.has(submittedBy) && department === 'finance') ||
+        department === 'finance' ||
         isManager(leave)
       )
     })
@@ -765,7 +760,7 @@ const baseLeaveRequests = computed(() => {
   if (isSuperAdmin.value) {
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
-      return submittedBy === myEmail || onboardedEmails.has(submittedBy) || isManager(leave)
+      return submittedBy === myEmail
     })
   }
   if (isAdmin.value) {

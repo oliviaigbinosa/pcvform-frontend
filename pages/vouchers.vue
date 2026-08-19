@@ -457,16 +457,19 @@ const receivedVouchers = computed(() =>
                           String(voucher.cc).toLowerCase() === FINANCE_EMAIL
 
     const submittedBy = String(voucher.submittedBy || '').toLowerCase()
+    const financeManagerSent = submittedBy === FINANCE_MANAGER_EMAIL.toLowerCase()
     const financeSuperAdminMatch =
       (voucher.financeSuperAdminRecipients || []).some(
         (recipient) => String(recipient).toLowerCase() === email,
       )
 
-    // For finance manager: do NOT show her own finance-routed vouchers in received tab
-    // (they are already in her sent tab)
     if (email === FINANCE_MANAGER_EMAIL) {
-      if (financeRouted && submittedBy === email) return false
+      if (financeRouted && submittedBy === email) return true
       return toMatch || ccMatch || financeSuperAdminMatch
+    }
+
+    if (isSuperAdmin.value && financeRouted && financeManagerSent) {
+      return false
     }
 
     const ccApprovalsMatch =
