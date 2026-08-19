@@ -903,9 +903,8 @@ function togglePurpose(id) {
 const onboardForm = reactive({
   email: '',
   department: (() => {
-    if (userEmail.value === 'gbemisola.olajide@getpayedmail.com') return 'Finance'
-    if (userRole.value !== 'super admin') return userDepartment.value || ''
-    return ''
+    if (hasFullVisibility.value) return ''
+    return userDepartment.value || ''
   })(),
   role: '',
 })
@@ -929,8 +928,8 @@ onMounted(async () => {
   } catch {
     // Department stays empty if the fetch fails
   }
-  if (isFinanceManager.value) {
-    onboardForm.department = 'Finance'
+  if (hasFullVisibility.value) {
+    onboardForm.department = ''
   } else if (userRole.value !== 'super admin') {
     onboardForm.department = userDepartment.value || ''
   }
@@ -1217,9 +1216,7 @@ async function handleAddUser() {
     newUser = await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, roleToSubmit)
     await sendInviteEmail(onboardForm.email, password, userEmail.value)
     onboardForm.email = ''
-    if (isFinanceManager.value) {
-      onboardForm.department = 'Finance'
-    } else if (isSuperAdmin.value) {
+    if (hasFullVisibility.value) {
       onboardForm.department = ''
     } else {
       onboardForm.department = userDepartment.value || ''

@@ -740,7 +740,6 @@ const baseLeaveRequests = computed(() => {
   const isManager = (leave) => String(leave.departmentManager || '').toLowerCase() === myEmail
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
   if (isFinanceManager.value) {
-    // For finance manager, show only leave requests from finance department members they onboarded
     const financeOnboardedEmails = new Set(
       onboardingUsers.value
         .filter((user) => String(user.department || '').toLowerCase() === 'finance')
@@ -749,8 +748,11 @@ const baseLeaveRequests = computed(() => {
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
       const department = String(leave.department || '').toLowerCase()
-      // Show if: submitted by finance dept member they onboarded, OR they are the manager
-      return (financeOnboardedEmails.has(submittedBy) && department === 'finance') || isManager(leave)
+      return (
+        submittedBy === myEmail ||
+        (financeOnboardedEmails.has(submittedBy) && department === 'finance') ||
+        isManager(leave)
+      )
     })
   }
   if (canViewAll) {
@@ -758,6 +760,12 @@ const baseLeaveRequests = computed(() => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
       const status = (leave.status || '').toLowerCase()
       return submittedBy === myEmail || status === 'approved' || isManager(leave)
+    })
+  }
+  if (isSuperAdmin.value) {
+    return allLeaveRequests.value.filter((leave) => {
+      const submittedBy = String(leave.submittedBy || '').toLowerCase()
+      return submittedBy === myEmail || onboardedEmails.has(submittedBy) || isManager(leave)
     })
   }
   if (isAdmin.value) {
