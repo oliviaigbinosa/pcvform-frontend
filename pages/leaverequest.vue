@@ -26,10 +26,10 @@
           </p>
 
           <h1 class="serif">
-            {{ activeTab === 'requests' ? (isAdmin ? 'Leave Requests' : 'My Leave Requests') : 'Leave Request Form' }}
+            {{ activeTab === 'requests' ? (shouldShowAdminUi ? 'Leave Requests' : 'My Leave Requests') : 'Leave Request Form' }}
           </h1>
 
-          <p v-if="activeTab === 'requests' && isAdmin" class="vouchers-sub">
+          <p v-if="activeTab === 'requests' && shouldShowAdminUi" class="vouchers-sub">
             {{ displayedLeaveRequests.length }} leave request{{ displayedLeaveRequests.length !== 1 ? 's' : '' }} submitted by {{ isHr ? 'employees' : 'department members' }}
           </p>
         </div>
@@ -66,7 +66,7 @@
         <p>Your leave request has been sent for review.</p>
         <code class="leave-badge">{{ submittedEmployee }}</code>
         <div class="success-actions">
-          <button v-if="isAdmin" class="btn btn-outline" @click="viewRequests">View Leave Requests</button>
+          <button v-if="shouldShowAdminUi" class="btn btn-outline" @click="viewRequests">View Leave Requests</button>
           <button class="btn btn-primary" @click="resetForm">New Leave Request</button>
         </div>
       </div>
@@ -331,7 +331,7 @@
 
     <!-- Requests tab -->
     <div v-show="activeTab === 'requests'">
-      <div v-if="isAdmin || isHr" class="admin-filters card">
+      <div v-if="shouldShowAdminUi" class="admin-filters card">
         <div class="filter-row">
           <div ref="filterEmployeeDropdownRef" class="field admin-filter-field custom-select">
             <label class="mono-label">Filter by Employee</label>
@@ -499,7 +499,7 @@
 
         <div v-if="!displayedLeaveRequests.length" class="vouchers-empty">
           <p class="vouchers-empty__title">No leave requests</p>
-          <p class="vouchers-empty__sub">{{ isHr ? 'Leave requests from all employees will appear here.' : (isAdmin ? 'Leave requests from department members will appear here.' : 'Your leave requests will appear here.') }}</p>
+          <p class="vouchers-empty__sub">{{ isHr ? 'Leave requests from all employees will appear here.' : (shouldShowAdminUi ? 'Leave requests from department members will appear here.' : 'Your leave requests will appear here.') }}</p>
         </div>
 
         <table v-else class="vouchers-table">
@@ -512,7 +512,7 @@
               <th>Leave Type</th>
               <th class="reason-col">Reason</th>
               <th>Attachments</th>
-              <th class="text-center">{{ isAdmin && !isHr ? 'Action' : 'Status' }}</th>
+              <th class="text-center">{{ shouldShowAdminUi && !isHr ? 'Action' : 'Status' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -550,7 +550,7 @@
                 <template v-else>—</template>
               </td>
               <td class="text-center">
-                <template v-if="isAdmin && !isHr">
+                <template v-if="shouldShowAdminUi && !isHr">
                   <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && !leave.submitterIsAdmin">
                     <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
                       <button class="btn btn-approve" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Approved')">Approve</button>
@@ -637,6 +637,9 @@ const submittedEmployee = ref('')
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const isFinanceManager = computed(() => String(userEmail.value || '').toLowerCase() === FINANCE_MANAGER_EMAIL)
 const isHr = computed(() => String(userEmail.value || '').toLowerCase() === 'chinenye.onyia@getpayedmail.com')
+const shouldShowAdminUi = computed(() =>
+  (isAdmin.value && !isSuperAdmin.value) || isFinanceManager.value || isHr.value,
+)
 const form = reactive({
   employeeName: '',
   departmentManager: userRole.value === 'super admin' && !isFinanceManager.value ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || ''),
