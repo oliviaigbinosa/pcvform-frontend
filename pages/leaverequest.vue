@@ -187,6 +187,7 @@
   <button
   type="button"
   class="btn btn-primary"
+  :disabled="validating"
   @click="openPreview"
 >
   <svg
@@ -201,7 +202,7 @@
     <circle cx="12" cy="12" r="3" />
   </svg>
 
-  Review &amp; Submit
+  {{ validating ? 'Validating...' : 'Review &amp; Submit' }}
 </button>
 </div>
 
@@ -310,6 +311,7 @@
 
       <button
         class="btn btn-outline"
+        :disabled="submitting"
         @click="showPreview = false"
       >
         Back
@@ -558,14 +560,14 @@
                     </div>
                   </template>
                   <template v-else>
-                    <span class="status-badge" :class="'status-badge--' + (leave.status?.toLowerCase() || 'pending')">
-                      {{ leave.status || 'Pending' }}
+                    <span class="status-badge" :class="'status-badge--' + (displayLeaveStatus(leave).toLowerCase())">
+                      {{ displayLeaveStatus(leave) }}
                     </span>
                   </template>
                 </template>
                 <template v-else>
-                  <span class="status-badge" :class="'status-badge--' + (leave.status?.toLowerCase() || 'pending')">
-                    {{ leave.status || 'Pending' }}
+                  <span class="status-badge" :class="'status-badge--' + (displayLeaveStatus(leave).toLowerCase())">
+                    {{ displayLeaveStatus(leave) }}
                   </span>
                 </template>
               </td>
@@ -632,6 +634,7 @@ const showPreview = ref(false)
 const showFilePreview = ref(false)
 const previewFile = ref(null)
 const submitting = ref(false)
+const validating = ref(false)
 const submitted = ref(false)
 const submittedEmployee = ref('')
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
@@ -640,6 +643,8 @@ const isHr = computed(() => String(userEmail.value || '').toLowerCase() === 'chi
 const shouldShowAdminUi = computed(() =>
   (isAdmin.value && !isSuperAdmin.value) || isFinanceManager.value || isHr.value,
 )
+// Helper available to the template to check if the current user is the manager for a leave
+const isManager = (leave) => String(leave.departmentManager || '').toLowerCase() === String(userEmail.value || '').toLowerCase()
 const form = reactive({
   employeeName: '',
   departmentManager: userRole.value === 'super admin' && !isFinanceManager.value ? FINANCE_MANAGER_EMAIL : (userCreatedBy.value || ''),
@@ -740,7 +745,6 @@ async function confirmStatus() {
 const baseLeaveRequests = computed(() => {
   const myEmail = String(userEmail.value || '').toLowerCase()
   const canViewAll = myEmail === 'chinenye.onyia@getpayedmail.com'
-  const isManager = (leave) => String(leave.departmentManager || '').toLowerCase() === myEmail
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => String(user.email || '').toLowerCase()))
   if (isFinanceManager.value) {
     const financeMemberEmails = new Set(
@@ -761,7 +765,7 @@ const baseLeaveRequests = computed(() => {
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
       const status = (leave.status || '').toLowerCase()
-      return submittedBy === myEmail || status === 'approved' || isManager(leave)
+      return submittedBy === myEmail || status === 'approved'
     })
   }
   if (isSuperAdmin.value) {
@@ -813,6 +817,19 @@ const displayedLeaveRequests = computed(() => {
   )
 })
 
+// Show finance manager's own leave requests as Pending unless finalised (Approved/Declined)
+function displayLeaveStatus(leave) {
+  if (!leave) return 'Pending'
+  const status = (leave.status || 'Pending')
+  const submittedBy = String(leave.submittedBy || '').toLowerCase()
+  if (submittedBy === FINANCE_MANAGER_EMAIL) {
+    const low = status.toLowerCase()
+    if (low === 'approved' || low === 'declined') return status
+    return 'Pending'
+  }
+  return status
+}
+
 function parseDate(value) {
   const [year, month, day] = value.split('-').map(Number)
   return new Date(year, month - 1, day)
@@ -823,13 +840,13 @@ async function validateManagerEmail(manager) {
   const myEmail = String(userEmail.value || '').toLowerCase()
 
   if (!managerEmail) {
-    return { valid: false, error: 'Department manager is required' }
+    return { valid: false, error: 'Department manager email is required' }
   }
   if (managerEmail.indexOf('@') <= 0) {
     return { valid: false, error: 'Enter a valid email address' }
   }
   if (!/^[^\s@]+@getpayedmail\.com$/.test(managerEmail)) {
-    return { valid: false, error: 'Manager email must be a getpayedmail.com address' }
+    return { valid: false, error: 'Manager email must end with @getpayedmail.com' }
   }
   if (managerEmail === myEmail) {
     return { valid: false, error: 'Invalid email' }
@@ -857,10 +874,11 @@ async function validateManagerEmail(manager) {
   } catch {
     const adminEmailSet = new Set(adminEmails.value.map((email) => String(email || '').toLowerCase()))
     const userEmailSet = new Set(userEmails.value.map((email) => String(email || '').toLowerCase()))
-    if (userEmailSet.has(managerEmail)) {
+    const isFinanceManager = managerEmail === FINANCE_MANAGER_EMAIL
+    if (userEmailSet.has(managerEmail) && !isFinanceManager) {
       return { valid: false, error: 'This user is not a department manager' }
     }
-    if (!adminEmailSet.has(managerEmail)) {
+    if (!adminEmailSet.has(managerEmail) && !isFinanceManager) {
       return { valid: false, error: 'This user has not been onboarded yet' }
     }
     return { valid: true }
@@ -902,7 +920,12 @@ async function validate() {
 }
 
 async function openPreview() {
-  if (await validate()) showPreview.value = true
+  validating.value = true
+  try {
+    if (await validate()) showPreview.value = true
+  } finally {
+    validating.value = false
+  }
 }
 
 function clearErr(key) {
@@ -978,7 +1001,7 @@ onMounted(async () => {
     // keep localStorage values
   }
   try {
-    if (!allLeaveRequests.value.length) await fetchLeaveRequests()
+    await fetchLeaveRequests()
   } catch {
     // ignore
   }
@@ -1065,10 +1088,10 @@ function viewRequests() {
 }
 
 async function submitLeave() {
-  if (!(await validate())) return
   if (submitting.value) return
   submitting.value = true
   try {
+    if (!(await validate())) return
     await addLeaveRequest({
       ...form,
       attachments: attachments.value,
@@ -1162,6 +1185,7 @@ async function submitLeave() {
   margin-top: 24px;
   margin-left: auto;
   margin-right: auto;
+  transform: translateY(-8px);
 }
 
 .dashboard-tabs .dashboard-tabs__tab {
@@ -1618,7 +1642,7 @@ async function submitLeave() {
   padding: 0 16px;
   white-space: nowrap;
   font-size: 13px;
-  transform: none;
+  transform: translateY(-4px);
 }
 
 @media (max-width: 768px) {

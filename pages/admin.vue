@@ -160,15 +160,15 @@
             <span class="amount-total serif">₦{{ selectedVoucher.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00' }}</span>
           </div>
 
-          <div v-if="selectedVoucher.approvedBy || selectedVoucher.declinedBy || selectedVoucher.processedBy" class="status-lines">
+          <div v-if="selectedVoucher.approvedBy || selectedVoucher.declinedBy || selectedVoucher.processedBy || selectedVoucher.rejectedBy" class="status-lines">
             <p v-if="selectedVoucher.approvedBy" class="processed-by mono-label">
               Approved by {{ selectedVoucher.approvedBy }}
             </p>
             <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Declined'" class="processed-by mono-label">
               Declined by {{ selectedVoucher.declinedBy }}
             </p>
-            <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Rejected'" class="processed-by mono-label">
-              Rejected by {{ selectedVoucher.declinedBy }}
+            <p v-if="selectedVoucher.rejectedBy && selectedVoucher.status === 'Rejected'" class="processed-by mono-label">
+              Rejected by {{ selectedVoucher.rejectedBy }}
             </p>
             <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
               Processed by {{ selectedVoucher.processedBy }}
@@ -378,10 +378,10 @@
                 <td><span class="voucher-purpose" :class="{ expanded: expandedPurposes[voucher.id] }" @click.stop="togglePurpose(voucher.id)">{{ voucher.purpose }}</span></td>
                 <td class="text-right font-mono font-medium">₦{{ voucher.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
                 <td class="text-center">
-                  <span class="status-badge" :class="'status-badge--' + (voucher.status?.toLowerCase() || 'pending')">
-                    <svg v-if="voucher.status === 'Processed'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><polyline points="20 6 9 17 4 12" /></svg>
-                    <svg v-if="voucher.status === 'Rejected'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                    {{ voucher.status || 'Pending' }}
+                  <span class="status-badge" :class="'status-badge--' + (getDisplayStatusForSuperAdmin(voucher)?.toLowerCase() || 'pending')">
+                    <svg v-if="getDisplayStatusForSuperAdmin(voucher) === 'Processed'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><polyline points="20 6 9 17 4 12" /></svg>
+                    <svg v-if="getDisplayStatusForSuperAdmin(voucher) === 'Rejected'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    {{ getDisplayStatusForSuperAdmin(voucher) }}
                   </span>
                 </td>
               </tr>
@@ -416,7 +416,7 @@
               type="email"
               placeholder="firstname.lastname@getpayedmail.com"
               :class="{ error: onboardErrors.email }"
-              @input="onboardForm.email = $event.target.value.toLowerCase(); delete onboardErrors.email"
+              @input="onboardForm.email = $event.target.value.replace(/[^a-zA-Z.@]/g, '').toLowerCase(); delete onboardErrors.email"
             />
             <span v-if="onboardErrors.email" class="err-msg">{{ onboardErrors.email }}</span>
           </div>
@@ -804,13 +804,13 @@
     >
       <div class="modal-header" style="padding: 8px 24px 4px;">
         <div class="modal-header__title" style="font-size: 16px; font-weight: 700; letter-spacing: -0.04em;">
-          Delete {{ userToDelete?.role === 'admin' ? 'admin' : 'user' }}?
+          Delete {{ userToDelete?.role === 'admin' ? 'department manager' : 'department member' }}?
         </div>
         <button class="modal-close" @click="closeDeleteModal" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
         <p style="font-size: 18px; font-weight: 900; letter-spacing: -0.04em; margin: 0;">
-          Are you sure you want to delete this {{ userToDelete?.role === 'admin' ? 'admin' : 'user' }}?
+          Are you sure you want to delete this {{ userToDelete?.role === 'admin' ? 'department manager' : 'department member' }}?
           <span style="display: block; margin-top: 12px; font-size: 14px; color: var(--muted-fg); font-weight: 500;">
             {{ userToDelete?.email }} — This action cannot be undone.
           </span>
@@ -845,6 +845,7 @@ import {
   removeOnboardingUser,
   fetchOnboardingUsers,
   fetchCurrentUser,
+  fetchVouchers,
   userEmail,
   userRole,
   userDepartment,
@@ -935,16 +936,27 @@ onMounted(async () => {
   } else if (userRole.value !== 'super admin') {
     onboardForm.department = userDepartment.value || ''
   }
+  // Fetch vouchers when admin page loads
+  try {
+    await fetchVouchers()
+  } catch (error) {
+    console.error('Failed to load vouchers', error)
+  }
   window.addEventListener('click', closeDropdowns)
 })
 
 const adminFilter = reactive({ dept: '', user: '', status: '' })
 
 const displayedOnboardingUsers = computed(() => {
-  const financeManagerEmail = 'gbemisola.olajide@getpayedmail.com'
-  const filtered = onboardingUsers.value.filter(
-    (user) => String(user.email || '').toLowerCase() !== financeManagerEmail,
-  )
+  const FINANCE_MANAGER_EMAIL = 'gbemisola.olajide@getpayedmail.com'
+  const currentEmail = String(userEmail.value || '').toLowerCase()
+  // Only hide the finance manager account from other users; show it for the finance manager themself
+  const filtered = onboardingUsers.value.filter((user) => {
+    const u = String(user.email || '').toLowerCase()
+    if (currentEmail === FINANCE_MANAGER_EMAIL) return true
+    return u !== FINANCE_MANAGER_EMAIL
+  })
+
   if (!canViewTabs.value) return filtered
   if (onboardingListTab.value === 'admins') {
     return filtered.filter((user) => user.role === 'admin')
@@ -955,10 +967,26 @@ const displayedOnboardingUsers = computed(() => {
 const adminBaseVouchers = computed(() => {
   const onboardedEmails = new Set(onboardingUsers.value.map((user) => user.email.toLowerCase()))
   const current = String(userEmail.value || '').toLowerCase()
-  return [...allVouchers.value].reverse().filter((voucher) => {
+  return [...allVouchers.value].filter((voucher) => {
     const submitted = String(voucher.submittedBy || '').toLowerCase()
-    if (isSuperAdmin.value) return true
-    return submitted === current || onboardedEmails.has(submitted)
+    
+    if (isSuperAdmin.value) {
+      // For super admins, show all processed or rejected vouchers regardless of who submitted them
+      const status = voucher.status || 'Pending'
+      return status === 'Processed' || status === 'Rejected'
+    }
+    
+    // For admins, hide vouchers they sent themselves from the all vouchers tab (they can see them in sent tab)
+    if (submitted === current) return false
+    
+    // Check if voucher is from current user or onboarded users
+    const isFromVisibleUser = submitted === current || onboardedEmails.has(submitted)
+    if (!isFromVisibleUser) return false
+    
+    // For regular admins, show declined and approved vouchers (including those later processed/rejected)
+    const status = voucher.status || 'Pending'
+    // Show declined vouchers, and approved vouchers (even if they became processed/rejected)
+    return status === 'Declined' || status === 'Approved' || status === 'Processed' || status === 'Rejected'
   })
 })
 const adminDepts = computed(() =>
@@ -967,9 +995,29 @@ const adminDepts = computed(() =>
 const adminUsers = computed(() =>
   [...new Set(adminBaseVouchers.value.map((voucher) => voucher.submittedBy).filter(Boolean))].sort(),
 )
-const adminStatuses = computed(() =>
-  [...new Set(adminBaseVouchers.value.map((voucher) => (voucher.status || 'Pending').toLowerCase()).filter(Boolean))].sort(),
-)
+const adminStatuses = computed(() => {
+  if (isSuperAdmin.value) {
+    // For super admins, use display status which converts Approved to Pending
+    const displayStatuses = [...new Set(adminBaseVouchers.value.map((voucher) => getDisplayStatusForSuperAdmin(voucher)).filter(Boolean))].sort()
+    return displayStatuses
+  }
+  // For regular admins, show statuses based on actions they took
+  const currentEmail = String(userEmail.value || '').toLowerCase()
+  const actionsTaken = new Set()
+  
+  adminBaseVouchers.value.forEach((voucher) => {
+    // Check if current admin approved this voucher (even if status changed)
+    if (String(voucher.approvedBy || '').toLowerCase() === currentEmail) {
+      actionsTaken.add('Approved')
+    }
+    // Check if current admin declined this voucher (even if status changed)
+    if (String(voucher.declinedBy || '').toLowerCase() === currentEmail) {
+      actionsTaken.add('Declined')
+    }
+  })
+  
+  return [...actionsTaken].sort()
+})
 
 function openFilePreview(doc) {
   previewFile.value = doc
@@ -977,7 +1025,21 @@ function openFilePreview(doc) {
 }
 
 function formatStatus(status) {
-  return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All Statuses'
+  if (!status) return 'All Statuses'
+  // For super admins, statuses are already capitalized (Pending, Processed, Rejected)
+  // For regular admins, capitalize the first letter
+  if (isSuperAdmin.value) {
+    return status
+  }
+  return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+function getDisplayStatusForSuperAdmin(voucher) {
+  if (!isSuperAdmin.value) return voucher.status || 'Pending'
+  const status = voucher.status || 'Pending'
+  // For super admins in all vouchers tab:
+  // Only processed and rejected vouchers are shown, so display them as-is
+  return status
 }
 
 function formatDate(date) {
@@ -1142,12 +1204,18 @@ onBeforeUnmount(() => {
 })
 
 const filteredAdminVouchers = computed(() => {
+  const currentEmail = String(userEmail.value || '').toLowerCase()
   return adminBaseVouchers.value.filter(
     (voucher) =>
       (!adminFilter.dept || voucher.department === adminFilter.dept) &&
       (!adminFilter.user || voucher.submittedBy === adminFilter.user) &&
       (!adminFilter.status ||
-        (voucher.status || 'Pending').toLowerCase() === adminFilter.status),
+        (isSuperAdmin.value 
+          ? getDisplayStatusForSuperAdmin(voucher).toLowerCase() === adminFilter.status.toLowerCase()
+          : // For admins, filter by whether they specifically took the action
+            (adminFilter.status === 'Approved' ? String(voucher.approvedBy || '').toLowerCase() === currentEmail : 
+             adminFilter.status === 'Declined' ? String(voucher.declinedBy || '').toLowerCase() === currentEmail : 
+             voucher.status?.toLowerCase() === adminFilter.status.toLowerCase()))),
   )
 })
 
@@ -1206,6 +1274,15 @@ async function handleAddUser() {
   // Validate: Finance department members cannot be department managers
   if (onboardForm.department.toLowerCase() === 'finance' && onboardForm.role === 'admin') {
     onboardErrors.role = 'Select the appropriate role'
+  }
+  // Validate: No two admins with the same department
+  if (onboardForm.role === 'admin' && onboardForm.department) {
+    const existingAdminWithDept = onboardingUsers.value.find(
+      user => user.role === 'admin' && user.department.toLowerCase() === onboardForm.department.toLowerCase()
+    )
+    if (existingAdminWithDept) {
+      onboardErrors.department = 'A department manager has been onboarded with this department'
+    }
   }
   if (Object.keys(onboardErrors).length) return
 
@@ -1469,6 +1546,7 @@ async function handleRemoveUser(id) {
   padding: 0 16px;
   white-space: nowrap;
   font-size: 13px;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {

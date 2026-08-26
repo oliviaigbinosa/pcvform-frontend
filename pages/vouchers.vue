@@ -133,15 +133,15 @@
           <span class="amount-total serif">₦{{ selectedVoucher.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00' }}</span>
         </div>
 
-        <div v-if="selectedVoucher.approvedBy || selectedVoucher.declinedBy || selectedVoucher.processedBy" class="status-lines">
+        <div v-if="selectedVoucher.approvedBy || selectedVoucher.declinedBy || selectedVoucher.processedBy || selectedVoucher.rejectedBy" class="status-lines">
           <p v-if="selectedVoucher.approvedBy" class="processed-by mono-label">
             Approved by {{ selectedVoucher.approvedBy }}
           </p>
           <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Declined'" class="processed-by mono-label">
             Declined by {{ selectedVoucher.declinedBy }}
           </p>
-          <p v-if="selectedVoucher.declinedBy && selectedVoucher.status === 'Rejected'" class="processed-by mono-label">
-            Rejected by {{ selectedVoucher.declinedBy }}
+          <p v-if="selectedVoucher.rejectedBy && selectedVoucher.status === 'Rejected'" class="processed-by mono-label">
+            Rejected by {{ selectedVoucher.rejectedBy }}
           </p>
           <p v-if="selectedVoucher.processedBy" class="processed-by mono-label">
             Processed by {{ selectedVoucher.processedBy }}
@@ -231,7 +231,7 @@
           </thead>
           <tbody>
             <tr
-              v-for="voucher in [...displayedVouchers].reverse()"
+              v-for="voucher in displayedVouchers"
               :key="voucher.id"
               class="vouchers-table__row"
               @click="openVoucher(voucher)"
@@ -319,7 +319,7 @@ import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import FilePreview from '../components/FilePreview.vue'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
-import { allVouchers, loadingVouchers, userEmail, userRole, updateVoucherStatus } from '~/composables/appState'
+import { allVouchers, loadingVouchers, userEmail, userRole, updateVoucherStatus, fetchVouchers } from '~/composables/appState'
 
 const router = useRouter()
 const selectedVoucher = ref(null)
@@ -353,7 +353,9 @@ const canSuperAdminAct = computed(() => {
   const status = voucher.status || 'Pending'
   const isRecipient = isToMe.value || isCcMe.value || isFinanceRecipient.value
   if (!isRecipient) return false
+  // For admin-sent vouchers, super admin can act when status is Pending or Approved
   if (voucher.submitterIsAdmin && (status === 'Pending' || status === 'Approved')) return true
+  // For regular user vouchers, super admin can act when status is Approved
   if (status === 'Approved') return true
   return false
 })
@@ -437,9 +439,16 @@ function openFilePreview(doc) {
 
 const activeTab = ref('sent')
 
-onMounted(() => {
+onMounted(async () => {
   const saved = localStorage.getItem('pcv_vouchers_tab')
   if (saved === 'sent' || saved === 'received') activeTab.value = saved
+  
+  // Fetch vouchers when the page loads to ensure fresh data
+  try {
+    await fetchVouchers()
+  } catch (error) {
+    console.error('Failed to load vouchers', error)
+  }
 })
 
 watch(activeTab, (value) => {
@@ -457,38 +466,51 @@ const receivedVouchers = computed(() =>
                           String(voucher.cc).toLowerCase() === FINANCE_EMAIL
 
     const submittedBy = String(voucher.submittedBy || '').toLowerCase()
+    // For super admins: 
+    // - Vouchers from admins: show regardless of status (will display as pending unless processed/rejected)
+    // - Vouchers from regular users: only show if approved
+    if (isSuperAdmin.value) {
+      if (voucher.submitterIsAdmin) {
+        // Admin-sent vouchers: show regardless of status (will display as pending unless processed/rejected)
+        // No filtering needed here
+      } else {
+        // Regular user vouchers: only show if approved (processed/rejected will be filtered out later)
+        const st = (voucher.status || '').toLowerCase()
+        if (st !== 'approved') return false
+      }
+    }
     const financeManagerSent = submittedBy === FINANCE_MANAGER_EMAIL.toLowerCase()
     const financeSuperAdminMatch =
       (voucher.financeSuperAdminRecipients || []).some(
         (recipient) => String(recipient).toLowerCase() === email,
       )
 
-    if (email === FINANCE_MANAGER_EMAIL.toLowerCase()) {
-      if (financeRouted && submittedBy === email) return true
-      return toMatch || ccMatch || financeSuperAdminMatch
-    }
-
-    if (isSuperAdmin.value && financeRouted && financeManagerSent) {
+    if (isSuperAdmin.value && financeRouted && financeManagerSent && email !== FINANCE_MANAGER_EMAIL.toLowerCase()) {
       return false
     }
 
+    const statusRaw = voucher.status || ''
     const ccApprovalsMatch =
-      ccMatch && ['Approved', 'Processed', 'Rejected', 'Declined'].includes(voucher.status || '')
+      ccMatch && (voucher.submitterIsAdmin ? ['Approved', 'Processed', 'Rejected', 'Declined'].includes(statusRaw) : statusRaw === 'Approved')
 
     const isMatch = toMatch || financeSuperAdminMatch || ccApprovalsMatch || (financeRouted && isSuperAdmin.value)
     if (!isMatch) return false
 
     if (isSuperAdmin.value) {
-      const status = voucher.status || 'Pending'
-      const isAdminSubmitted = voucher.submitterIsAdmin
-      if (toMatch) {
-        return ['Processed', 'Rejected', 'Declined'].includes(status) ||
-          (isAdminSubmitted && status === 'Pending')
-      }
-      if (isAdminSubmitted) {
-        return status === 'Pending' || status === 'Processed' || status === 'Rejected'
-      }
-      return status === 'Approved' || status === 'Processed' || status === 'Rejected'
+      // For super admins, filter out vouchers that have been processed or rejected by anyone
+      const processedBy = voucher.processedBy
+      const rejectedBy = voucher.rejectedBy
+      if (processedBy || rejectedBy) return false
+      // For super admins, the status filtering is now handled at the per-voucher level above
+      // based on whether the voucher is from an admin or regular user
+      return true
+    }
+
+    // For admins (not super admins), filter out vouchers that have been approved or declined by anyone
+    if (isAdminOrSuper.value && !isSuperAdmin.value) {
+      const approvedBy = voucher.approvedBy
+      const declinedBy = voucher.declinedBy
+      if (approvedBy || declinedBy) return false
     }
 
     return true
@@ -499,8 +521,17 @@ function displayStatusOf(voucher) {
   if (!voucher) return 'Pending'
   if (isSuperAdmin.value && activeTab.value === 'received') {
     const status = voucher.status || 'Pending'
-    if (voucher.submitterIsAdmin && status === 'Pending') return 'Pending'
-    if (status === 'Approved') return 'Pending'
+    // For super admins in received tab:
+    // - Admin-sent vouchers show as "Pending" unless processed/rejected
+    // - Regular user vouchers show as "Pending" when approved
+    if (voucher.submitterIsAdmin) {
+      // Admin-sent vouchers: only show actual status if processed/rejected, otherwise pending
+      if (status === 'Processed' || status === 'Rejected') return status
+      return 'Pending'
+    } else {
+      // Regular user vouchers: show approved as pending
+      if (status === 'Approved') return 'Pending'
+    }
   }
   return voucher.status || 'Pending'
 }

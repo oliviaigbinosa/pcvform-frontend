@@ -14,12 +14,31 @@ const loadingVouchers = ref(true)
 const allLeaveRequests = ref<any[]>([])
 const loadingLeaveRequests = ref(true)
 
+type OnboardingUser = {
+  id: string
+  email: string
+  addedAt: string
+  role: string
+  department: string
+}
+
+const onboardingUsers = ref<OnboardingUser[]>([])
+
+export type { OnboardingUser }
+
 if (process.client) {
   userEmail.value = sessionStorage.getItem('pcv_user') || ''
   userRole.value = sessionStorage.getItem('pcv_role') || ''
   userDepartment.value = localStorage.getItem('pcv_department') || ''
   userCreatedBy.value = localStorage.getItem('pcv_createdBy') || ''
   isLoggedIn.value = Boolean(userEmail.value)
+
+  // Clear voucher and user data on page load to prevent showing previous session data
+  allVouchers.value = []
+  allLeaveRequests.value = []
+  onboardingUsers.value = []
+  loadingVouchers.value = true
+  loadingLeaveRequests.value = true
 }
 
 function loginUser(email: string, role = 'user', department = '', createdBy = '') {
@@ -28,6 +47,13 @@ function loginUser(email: string, role = 'user', department = '', createdBy = ''
   userDepartment.value = department
   userCreatedBy.value = createdBy
   isLoggedIn.value = true
+
+  // Clear previous session data and reset loading states
+  allVouchers.value = []
+  allLeaveRequests.value = []
+  onboardingUsers.value = []
+  loadingVouchers.value = true
+  loadingLeaveRequests.value = true
 
   sessionStorage.setItem('pcv_user', email)
   sessionStorage.setItem('pcv_role', role)
@@ -41,6 +67,11 @@ function logoutUser() {
   userDepartment.value = ''
   userCreatedBy.value = ''
   isLoggedIn.value = false
+
+  // Clear voucher and user data to prevent showing previous user's data
+  allVouchers.value = []
+  allLeaveRequests.value = []
+  onboardingUsers.value = []
 
   sessionStorage.removeItem('pcv_user')
   sessionStorage.removeItem('pcv_role')
@@ -74,6 +105,7 @@ async function addVoucher(entry: Record<string, unknown>) {
     throw new Error(data.error || 'Failed to save voucher')
   }
   allVouchers.value = [data, ...allVouchers.value]
+  return data
 }
 
 async function fetchLeaveRequests() {
@@ -139,16 +171,6 @@ async function updateVoucherStatus(id: string, status: string) {
     allVouchers.value[index] = data
   }
 }
-
-type OnboardingUser = {
-  id: string
-  email: string
-  addedAt: string
-  role: string
-  department: string
-}
-
-const onboardingUsers = ref<OnboardingUser[]>([])
 
 async function fetchOnboardingUsers() {
   const res = await fetch(`${API_BASE}/api/admin/users`, {
@@ -229,6 +251,15 @@ async function fetchCurrentUser() {
   localStorage.setItem('pcv_createdBy', userCreatedBy.value)
 }
 
+async function fetchNextSerial(): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/vouchers/next-serial`)
+  if (!res.ok) {
+    throw new Error('Failed to fetch next serial')
+  }
+  const data = await res.json()
+  return data.serial
+}
+
 export {
   addLeaveRequest,
   addOnboardingUser,
@@ -240,6 +271,7 @@ export {
   fetchLeaveRequests,
   fetchOnboardingUsers,
   fetchVouchers,
+  fetchNextSerial,
   isAdmin,
   isLoggedIn,
   loadingLeaveRequests,

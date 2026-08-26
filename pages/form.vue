@@ -310,7 +310,7 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers, API_BASE } from '~/composables/appState'
+import { addVoucher, userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers, API_BASE, fetchNextSerial } from '~/composables/appState'
 
 const FINANCE_EMAIL = 'finance@getpayedmail.com'
 const FINANCE_MANAGER_EMAIL = 'gbemisola.olajide@getpayedmail.com'
@@ -476,13 +476,9 @@ function isEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 }
 
-function makeSerial() {
-  const nextId = allVouchers.value.length + 1
-  return String(nextId).padStart(3, '0')
-}
-
 const router = useRouter()
-const voucherSerial = computed(() => makeSerial())
+const voucherSerial = ref('001')
+const loadingSerial = ref(true)
 const step = ref(0)
 const showPreview = ref(false)
 const submitted = ref(false)
@@ -506,6 +502,7 @@ onMounted(async () => {
     form.to = defaultToEmail()
     form.cc = defaultCcEmail()
     form.from = userEmail.value
+    await updateVoucherSerial()
   } catch {
     // Department stays empty if the fetch fails
   }
@@ -539,7 +536,22 @@ const voucherNo = computed(
   () => `PCV/${deptSlug.value}/${currentYear()}/${currentMonth()}/${voucherSerial.value}`,
 )
 
-const voucherNoDisplay = computed(() => (loadingVouchers.value ? '' : voucherNo.value))
+async function updateVoucherSerial() {
+  loadingSerial.value = true
+  try {
+    voucherSerial.value = await fetchNextSerial()
+  } catch (error) {
+    console.error('Failed to fetch next serial', error)
+    voucherSerial.value = '001'
+  } finally {
+    loadingSerial.value = false
+  }
+}
+
+const voucherNoDisplay = computed(() => {
+  if (loadingSerial.value || loadingVouchers.value) return 'Loading...'
+  return voucherNo.value
+})
 const parsedAmount = computed(() => parseFloat(form.amountFigures) || 0)
 const formattedAmount = computed(() => formatNumberWithCommas(parsedAmount.value))
 const displayAmount = computed({
@@ -695,7 +707,7 @@ async function submitVoucher() {
   }
 }
 
-function resetForm() {
+async function resetForm() {
   Object.assign(form, {
     from: userEmail.value,
     to: defaultToEmail(),
@@ -712,5 +724,6 @@ function resetForm() {
   step.value = 0
   submitted.value = false
   Object.keys(errors).forEach((k) => delete errors[k])
+  await updateVoucherSerial()
 }
 </script>

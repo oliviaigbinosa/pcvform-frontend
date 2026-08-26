@@ -1,18 +1,9 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { fetchVouchers } from '~/composables/appState'
+import { computed, ref } from 'vue'
 
 const route = useRoute()
 const showSidebar = computed(() => !['login', 'index'].includes(String(route.name ?? '')))
 const sidebarOpen = ref(false)
-
-onMounted(async () => {
-  try {
-    await fetchVouchers()
-  } catch (error) {
-    console.error('Failed to load vouchers', error)
-  }
-})
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="sidebarOpen" @click="emit('close')" class="sidebar-overlay" />
+    <div v-if="sidebarOpen" @click="emit('close')" class="sidebar-overlay"></div>
     <aside :class="['sidebar', { 'open': sidebarOpen }]">
       <div class="sidebar__brand">
         <div class="sidebar__icon">

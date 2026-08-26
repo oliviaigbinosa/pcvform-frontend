@@ -17,7 +17,7 @@
           v-model="loginForm.email"
           label="Email Address"
           type="email"
-          placeholder="Enter you work email"
+          placeholder="Enter your getpayed email"
           :error="loginErrors.email"
           :disabled="loggingIn"
           @input="delete loginErrors.email"
@@ -118,13 +118,34 @@
   font-weight: 500;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .logout-success-block {
+    padding: 10px 16px;
+  }
+
+  .logout-success-text {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logout-success-block {
+    padding: 8px 12px;
+  }
+
+  .logout-success-text {
+    font-size: 12px;
+    white-space: normal;
+  }
+}
 </style>
 
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import FormField from '../components/FormField.vue'
-import { API_BASE, loginUser } from '~/composables/appState'
+import { API_BASE, loginUser, fetchVouchers, fetchLeaveRequests, fetchOnboardingUsers } from '~/composables/appState'
 
 useHead({
   link: [{ rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
@@ -180,6 +201,20 @@ async function handleLogin() {
     }
 
     loginUser(data.email, data.role, data.department || '', data.createdBy || '')
+    
+    // Fetch vouchers and leave requests immediately after login
+    const fetchPromises = [
+      fetchVouchers(),
+      fetchLeaveRequests()
+    ]
+    
+    // Fetch onboarding users if the user is an admin or super admin
+    if (data.role === 'admin' || data.role === 'super admin') {
+      fetchPromises.push(fetchOnboardingUsers())
+    }
+    
+    await Promise.all(fetchPromises)
+    
     router.replace(data.role === 'admin' || data.role === 'super admin' ? { name: 'admin' } : { name: 'form' })
   } catch {
     loginErrors.general = 'Could not reach the server. Make sure the backend is running.'
