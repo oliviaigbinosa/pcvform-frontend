@@ -199,8 +199,8 @@ function handleLogout() {
   showLogoutModal.value = true
 }
 
-function confirmLogout() {
-  logoutUser()
+async function confirmLogout() {
+  await logoutUser()
   showLogoutModal.value = false
   router.push({ name: 'login', query: { logout: 'true' } })
 }

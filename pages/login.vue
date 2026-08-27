@@ -192,6 +192,7 @@ async function handleLogin() {
         email: loginForm.email,
         password: loginForm.password,
       }),
+      credentials: 'include' // Important for cookies
     })
 
     const data = await res.json()
@@ -200,7 +201,7 @@ async function handleLogin() {
       return
     }
 
-    loginUser(data.email, data.role, data.department || '', data.createdBy || '')
+    loginUser(data.email, data.role, data.department || '', data.createdBy || '', data.token || '')
     
     // Fetch vouchers and leave requests immediately after login
     const fetchPromises = [

@@ -501,7 +501,7 @@
 
         <div v-if="!displayedLeaveRequests.length" class="vouchers-empty">
           <p class="vouchers-empty__title">No leave requests</p>
-          <p class="vouchers-empty__sub">{{ isHr ? 'Leave requests from all employees will appear here.' : (shouldShowAdminUi ? 'Leave requests from department members will appear here.' : 'Your leave requests will appear here.') }}</p>
+          <p class="vouchers-empty__sub">{{ isHr ? 'Leave requests from all employees will appear here.' : (shouldShowAdminUi ? 'Leave requests from you and department members will appear here.' : 'Your leave requests will appear here.') }}</p>
         </div>
 
         <table v-else class="vouchers-table">
