@@ -41,20 +41,12 @@ if (process.client) {
   loadingLeaveRequests.value = true
 }
 
-// Store JWT token (as fallback if cookies don't work)
-const authToken = ref('')
-
-if (process.client) {
-  authToken.value = localStorage.getItem('pcv_auth_token') || ''
-}
-
-function loginUser(email: string, role = 'user', department = '', createdBy = '', token = '') {
+function loginUser(email: string, role = 'user', department = '', createdBy = '') {
   userEmail.value = email
   userRole.value = role
   userDepartment.value = department
   userCreatedBy.value = createdBy
   isLoggedIn.value = true
-  authToken.value = token
 
   // Clear previous session data and reset loading states
   allVouchers.value = []
@@ -67,30 +59,14 @@ function loginUser(email: string, role = 'user', department = '', createdBy = ''
   sessionStorage.setItem('pcv_role', role)
   localStorage.setItem('pcv_department', department)
   localStorage.setItem('pcv_createdBy', createdBy)
-  
-  // Store JWT token as fallback
-  if (token) {
-    localStorage.setItem('pcv_auth_token', token)
-  }
 }
 
-async function logoutUser() {
-  try {
-    // Call backend logout to clear httpOnly cookie
-    await fetch(`${API_BASE}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include' // Important for cookies
-    })
-  } catch (error) {
-    console.error('Backend logout failed:', error)
-  }
-
+function logoutUser() {
   userEmail.value = ''
   userRole.value = ''
   userDepartment.value = ''
   userCreatedBy.value = ''
   isLoggedIn.value = false
-  authToken.value = ''
 
   // Clear voucher and user data to prevent showing previous user's data
   allVouchers.value = []
@@ -101,7 +77,6 @@ async function logoutUser() {
   sessionStorage.removeItem('pcv_role')
   localStorage.removeItem('pcv_department')
   localStorage.removeItem('pcv_createdBy')
-  localStorage.removeItem('pcv_auth_token')
 }
 
 async function fetchVouchers() {
@@ -109,10 +84,7 @@ async function fetchVouchers() {
   try {
     const headers: Record<string, string> = {}
     if (userEmail.value) headers['x-admin-email'] = userEmail.value
-    const res = await fetch(`${API_BASE}/api/vouchers`, { 
-      headers,
-      credentials: 'include' // Important for cookies
-    })
+    const res = await fetch(`${API_BASE}/api/vouchers`, { headers })
     if (!res.ok) {
       throw new Error('Failed to fetch vouchers')
     }
@@ -127,7 +99,6 @@ async function addVoucher(entry: Record<string, unknown>) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(entry),
-    credentials: 'include' // Important for cookies
   })
   const data = await res.json()
   if (!res.ok) {
@@ -142,10 +113,7 @@ async function fetchLeaveRequests() {
   try {
     const headers: Record<string, string> = {}
     if (userEmail.value) headers['x-admin-email'] = userEmail.value
-    const res = await fetch(`${API_BASE}/api/leave-requests`, { 
-      headers,
-      credentials: 'include' // Important for cookies
-    })
+    const res = await fetch(`${API_BASE}/api/leave-requests`, { headers })
     if (!res.ok) {
       throw new Error('Failed to fetch leave requests')
     }
@@ -160,7 +128,6 @@ async function addLeaveRequest(entry: Record<string, unknown>) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(entry),
-    credentials: 'include' // Important for cookies
   })
   const data = await res.json()
   if (!res.ok) {
@@ -176,7 +143,6 @@ async function updateLeaveRequestStatus(id: string, status: string) {
     method: 'PATCH',
     headers,
     body: JSON.stringify({ status }),
-    credentials: 'include' // Important for cookies
   })
   const data = await res.json()
   if (!res.ok) {
@@ -195,7 +161,6 @@ async function updateVoucherStatus(id: string, status: string) {
     method: 'PATCH',
     headers,
     body: JSON.stringify({ status }),
-    credentials: 'include' // Important for cookies
   })
   const data = await res.json()
   if (!res.ok) {
@@ -210,7 +175,6 @@ async function updateVoucherStatus(id: string, status: string) {
 async function fetchOnboardingUsers() {
   const res = await fetch(`${API_BASE}/api/admin/users`, {
     headers: { 'x-admin-email': userEmail.value },
-    credentials: 'include' // Important for cookies
   })
   if (!res.ok) {
     throw new Error('Failed to load users')
@@ -227,7 +191,6 @@ async function addOnboardingUser(email: string, password: string, createdBy?: st
     method: 'POST',
     headers,
     body: JSON.stringify({ email, password, createdBy, department, role }),
-    credentials: 'include' // Important for cookies
   })
   const data = await res.json()
   if (!res.ok) {
@@ -240,7 +203,6 @@ async function removeOnboardingUser(id: string) {
   const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
     method: 'DELETE',
     headers: { 'x-admin-email': userEmail.value },
-    credentials: 'include' // Important for cookies
   })
   if (!res.ok) {
     const data = await res.json()
@@ -254,7 +216,6 @@ async function changePassword(email: string, currentPassword: string, newPasswor
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, currentPassword, newPassword }),
-    credentials: 'include' // Important for cookies
   })
   const data = await res.json()
   if (!res.ok) {
@@ -267,7 +228,6 @@ async function sendInviteEmail(email: string, password: string, from?: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ to: email, password, from }),
-    credentials: 'include' // Important for cookies
   })
   const data = await res.json()
   if (!res.ok) {
@@ -280,7 +240,6 @@ async function fetchCurrentUser() {
   if (!email) return
   const res = await fetch(`${API_BASE}/api/auth/me`, {
     headers: { 'x-user-email': email },
-    credentials: 'include' // Important for cookies
   })
   if (!res.ok) {
     throw new Error('Failed to fetch current user')
@@ -308,7 +267,6 @@ export {
   allLeaveRequests,
   allVouchers,
   API_BASE,
-  authToken,
   changePassword,
   fetchLeaveRequests,
   fetchOnboardingUsers,
