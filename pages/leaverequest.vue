@@ -383,6 +383,15 @@
                 REQUESTS SENT BY MEMBERS
               </button>
               <button
+                v-if="isHr"
+                type="button"
+                class="custom-select__option"
+                :class="{ selected: leaveFilter.employee === '__APPROVED__' }"
+                @click="selectLeaveFilterEmployee('__APPROVED__')"
+              >
+                APPROVED REQUESTS
+              </button>
+              <button
                 v-for="employee in leaveEmployees"
                 :key="employee"
                 type="button"
@@ -553,7 +562,7 @@
               </td>
               <td class="text-center">
                 <template v-if="shouldShowAdminUi && !isHr">
-                  <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && (!leave.submitterIsAdmin || isManager(leave))">
+                  <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && (!leave.submitterIsAdmin || isManager(leave)) && String(leave.submittedBy || '').toLowerCase() !== String(userEmail.value || '').toLowerCase()">
                     <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
                       <button class="btn btn-approve" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Approved')">Approve</button>
                       <button class="btn btn-decline" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Declined')">Decline</button>
@@ -771,7 +780,7 @@ const baseLeaveRequests = computed(() => {
   if (isSuperAdmin.value) {
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
-      return submittedBy === myEmail
+      return submittedBy === myEmail || isManager(leave)
     })
   }
   if (isAdmin.value) {
@@ -799,6 +808,7 @@ const selectedEmployeeFilterLabel = computed(() => {
   if (leaveFilter.employee === '') return 'All Employees'
   if (leaveFilter.employee === '__ME__') return 'MY REQUESTS'
   if (leaveFilter.employee === '__MEMBERS__') return 'REQUESTS SENT BY MEMBERS'
+  if (leaveFilter.employee === '__APPROVED__') return 'APPROVED REQUESTS'
   return leaveFilter.employee
 })
 
@@ -811,23 +821,18 @@ const displayedLeaveRequests = computed(() => {
           ? String(leave.submittedBy || '').toLowerCase() === myEmail
           : leaveFilter.employee === '__MEMBERS__'
             ? String(leave.submittedBy || '').toLowerCase() !== myEmail
-            : leave.employeeName === leaveFilter.employee)) &&
+            : leaveFilter.employee === '__APPROVED__'
+              ? (leave.status || 'Pending').toLowerCase() === 'approved'
+              : leave.employeeName === leaveFilter.employee)) &&
       (!leaveFilter.status || (leave.status || 'Pending').toLowerCase() === leaveFilter.status) &&
       (!leaveFilter.department || leave.department === leaveFilter.department),
   )
 })
 
-// Show finance manager's own leave requests as Pending unless finalised (Approved/Declined)
+// Display the actual status for all leave requests
 function displayLeaveStatus(leave) {
   if (!leave) return 'Pending'
-  const status = (leave.status || 'Pending')
-  const submittedBy = String(leave.submittedBy || '').toLowerCase()
-  if (submittedBy === FINANCE_MANAGER_EMAIL) {
-    const low = status.toLowerCase()
-    if (low === 'approved' || low === 'declined') return status
-    return 'Pending'
-  }
-  return status
+  return leave.status || 'Pending'
 }
 
 function parseDate(value) {
@@ -913,6 +918,15 @@ async function validate() {
   } else {
     const end = parseDate(form.endDate)
     errors.endDate = end <= today ? 'Enter a valid end date' : ''
+  }
+
+  // Validate that end date is after start date
+  if (form.startDate && form.endDate) {
+    const start = parseDate(form.startDate)
+    const end = parseDate(form.endDate)
+    if (end <= start) {
+      errors.endDate = 'Enter a valid end date'
+    }
   }
 
   errors.reason = form.reason.trim() ? '' : 'Reason is required'
