@@ -561,7 +561,7 @@
                 <template v-else>—</template>
               </td>
               <td class="text-center">
-                <template v-if="shouldShowAdminUi && !isHr">
+                <template v-if="shouldShowAdminUi && (!isHr || isManager(leave))">
                   <template v-if="(leave.status || 'Pending').toLowerCase() === 'pending' && (!leave.submitterIsAdmin || isManager(leave)) && String(leave.submittedBy || '').toLowerCase() !== String(userEmail.value || '').toLowerCase()">
                     <div style="display: flex; justify-content: center; gap: 6px; align-items: center;">
                       <button class="btn btn-approve" style="margin-top: 0; padding: 4px 8px; font-size: 11px; border-radius: 9999px; white-space: nowrap;" @click.stop="confirmAction(leave, 'Approved')">Approve</button>
@@ -774,7 +774,7 @@ const baseLeaveRequests = computed(() => {
     return allLeaveRequests.value.filter((leave) => {
       const submittedBy = String(leave.submittedBy || '').toLowerCase()
       const status = (leave.status || '').toLowerCase()
-      return submittedBy === myEmail || status === 'approved'
+      return submittedBy === myEmail || status === 'approved' || isManager(leave)
     })
   }
   if (isSuperAdmin.value) {
@@ -820,7 +820,7 @@ const displayedLeaveRequests = computed(() => {
         (leaveFilter.employee === '__ME__'
           ? String(leave.submittedBy || '').toLowerCase() === myEmail
           : leaveFilter.employee === '__MEMBERS__'
-            ? String(leave.submittedBy || '').toLowerCase() !== myEmail
+            ? String(leave.departmentManager || '').toLowerCase() === myEmail
             : leaveFilter.employee === '__APPROVED__'
               ? (leave.status || 'Pending').toLowerCase() === 'approved'
               : leave.employeeName === leaveFilter.employee)) &&

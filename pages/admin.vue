@@ -6,7 +6,7 @@
         <p class="vouchers-sub">
           {{
             activeTab === 'vouchers'
-              ? filteredAdminVouchers.length + ' submitted voucher' + (filteredAdminVouchers.length !== 1 ? 's' : '') + ' across all ' + (isSuperAdmin ? 'employees' : 'department members')
+              ? filteredAdminVouchers.length + ' audited voucher' + (filteredAdminVouchers.length !== 1 ? 's' : '') + ' across all ' + (isSuperAdmin ? 'employees' : 'department members')
               : 'Manage user access and onboarding'
           }}
         </p>
