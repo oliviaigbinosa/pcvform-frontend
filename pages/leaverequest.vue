@@ -910,7 +910,7 @@ async function validate() {
     errors.startDate = 'Start date is required'
   } else {
     const start = parseDate(form.startDate)
-    errors.startDate = start < today ? 'Enter a valid start date' : ''
+    errors.startDate = start <= today ? 'Enter a valid start date' : ''
   }
 
   if (!form.endDate) {
@@ -920,11 +920,11 @@ async function validate() {
     errors.endDate = end <= today ? 'Enter a valid end date' : ''
   }
 
-  // Validate that end date is after start date
+  // Validate that end date is after or equal to start date
   if (form.startDate && form.endDate) {
     const start = parseDate(form.startDate)
     const end = parseDate(form.endDate)
-    if (end <= start) {
+    if (end < start) {
       errors.endDate = 'Enter a valid end date'
     }
   }
