@@ -227,7 +227,7 @@ async function handleChangePassword() {
 
   saving.value = true
   try {
-    await changePassword(userEmail.value, form.currentPassword, form.newPassword)
+    await changePassword(form.currentPassword, form.newPassword)
     form.currentPassword = ''
     form.newPassword = ''
     form.confirmPassword = ''

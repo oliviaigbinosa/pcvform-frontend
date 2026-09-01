@@ -83,7 +83,12 @@ async function handleSubmit() {
     const data = await res.json()
 
     if (!res.ok) {
-      error.value = data.error || 'Failed to send reset link'
+      // Handle rate limiting specifically
+      if (data.error && data.error.includes('Too many password reset attempts')) {
+        error.value = data.error
+      } else {
+        error.value = data.error || 'Failed to send reset link'
+      }
       return
     }
 

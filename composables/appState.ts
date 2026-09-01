@@ -14,6 +14,24 @@ const loadingVouchers = ref(true)
 const allLeaveRequests = ref<any[]>([])
 const loadingLeaveRequests = ref(true)
 
+// Get JWT token from sessionStorage
+function getAuthToken() {
+  if (process.client) {
+    return sessionStorage.getItem('pcv_token') || ''
+  }
+  return ''
+}
+
+// Create headers with JWT token
+function getAuthHeaders() {
+  const token = getAuthToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
+}
+
 type OnboardingUser = {
   id: string
   email: string
@@ -75,6 +93,7 @@ function logoutUser() {
 
   sessionStorage.removeItem('pcv_user')
   sessionStorage.removeItem('pcv_role')
+  sessionStorage.removeItem('pcv_token')
   localStorage.removeItem('pcv_department')
   localStorage.removeItem('pcv_createdBy')
 }
@@ -82,9 +101,7 @@ function logoutUser() {
 async function fetchVouchers() {
   loadingVouchers.value = true
   try {
-    const headers: Record<string, string> = {}
-    if (userEmail.value) headers['x-admin-email'] = userEmail.value
-    const res = await fetch(`${API_BASE}/api/vouchers`, { headers })
+    const res = await fetch(`${API_BASE}/api/vouchers`, { headers: getAuthHeaders() })
     if (!res.ok) {
       throw new Error('Failed to fetch vouchers')
     }
@@ -97,7 +114,7 @@ async function fetchVouchers() {
 async function addVoucher(entry: Record<string, unknown>) {
   const res = await fetch(`${API_BASE}/api/vouchers`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(entry),
   })
   const data = await res.json()
@@ -111,9 +128,7 @@ async function addVoucher(entry: Record<string, unknown>) {
 async function fetchLeaveRequests() {
   loadingLeaveRequests.value = true
   try {
-    const headers: Record<string, string> = {}
-    if (userEmail.value) headers['x-admin-email'] = userEmail.value
-    const res = await fetch(`${API_BASE}/api/leave-requests`, { headers })
+    const res = await fetch(`${API_BASE}/api/leave-requests`, { headers: getAuthHeaders() })
     if (!res.ok) {
       throw new Error('Failed to fetch leave requests')
     }
@@ -126,7 +141,7 @@ async function fetchLeaveRequests() {
 async function addLeaveRequest(entry: Record<string, unknown>) {
   const res = await fetch(`${API_BASE}/api/leave-requests`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(entry),
   })
   const data = await res.json()
@@ -137,11 +152,9 @@ async function addLeaveRequest(entry: Record<string, unknown>) {
 }
 
 async function updateLeaveRequestStatus(id: string, status: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (userEmail.value) headers['x-user-email'] = userEmail.value
   const res = await fetch(`${API_BASE}/api/leave-requests/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({ status }),
   })
   const data = await res.json()
@@ -155,11 +168,9 @@ async function updateLeaveRequestStatus(id: string, status: string) {
 }
 
 async function updateVoucherStatus(id: string, status: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (userEmail.value) headers['x-user-email'] = userEmail.value
   const res = await fetch(`${API_BASE}/api/vouchers/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({ status }),
   })
   const data = await res.json()
@@ -174,7 +185,7 @@ async function updateVoucherStatus(id: string, status: string) {
 
 async function fetchOnboardingUsers() {
   const res = await fetch(`${API_BASE}/api/admin/users`, {
-    headers: { 'x-admin-email': userEmail.value },
+    headers: getAuthHeaders(),
   })
   if (!res.ok) {
     throw new Error('Failed to load users')
@@ -183,13 +194,9 @@ async function fetchOnboardingUsers() {
 }
 
 async function addOnboardingUser(email: string, password: string, createdBy?: string, department?: string, role?: string) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (createdBy) {
-    headers['x-admin-email'] = createdBy
-  }
   const res = await fetch(`${API_BASE}/api/admin/users`, {
     method: 'POST',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({ email, password, createdBy, department, role }),
   })
   const data = await res.json()
@@ -202,7 +209,7 @@ async function addOnboardingUser(email: string, password: string, createdBy?: st
 async function removeOnboardingUser(id: string) {
   const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
     method: 'DELETE',
-    headers: { 'x-admin-email': userEmail.value },
+    headers: getAuthHeaders(),
   })
   if (!res.ok) {
     const data = await res.json()
@@ -211,11 +218,11 @@ async function removeOnboardingUser(id: string) {
   onboardingUsers.value = onboardingUsers.value.filter((user) => user.id !== id)
 }
 
-async function changePassword(email: string, currentPassword: string, newPassword: string) {
+async function changePassword(currentPassword: string, newPassword: string) {
   const res = await fetch(`${API_BASE}/api/auth/change-password`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, currentPassword, newPassword }),
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ currentPassword, newPassword }),
   })
   const data = await res.json()
   if (!res.ok) {
@@ -226,7 +233,7 @@ async function changePassword(email: string, currentPassword: string, newPasswor
 async function sendInviteEmail(email: string, password: string, from?: string) {
   const res = await fetch(`${API_BASE}/api/email/send-invite`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ to: email, password, from }),
   })
   const data = await res.json()
@@ -236,10 +243,8 @@ async function sendInviteEmail(email: string, password: string, from?: string) {
 }
 
 async function fetchCurrentUser() {
-  const email = userEmail.value
-  if (!email) return
   const res = await fetch(`${API_BASE}/api/auth/me`, {
-    headers: { 'x-user-email': email },
+    headers: getAuthHeaders(),
   })
   if (!res.ok) {
     throw new Error('Failed to fetch current user')
@@ -252,7 +257,9 @@ async function fetchCurrentUser() {
 }
 
 async function fetchNextSerial(): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/vouchers/next-serial`)
+  const res = await fetch(`${API_BASE}/api/vouchers/next-serial`, {
+    headers: getAuthHeaders(),
+  })
   if (!res.ok) {
     throw new Error('Failed to fetch next serial')
   }
@@ -272,6 +279,8 @@ export {
   fetchOnboardingUsers,
   fetchVouchers,
   fetchNextSerial,
+  getAuthToken,
+  getAuthHeaders,
   isAdmin,
   isLoggedIn,
   loadingLeaveRequests,

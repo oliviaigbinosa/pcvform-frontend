@@ -180,7 +180,12 @@ async function handleSubmit() {
     const data = await res.json()
 
     if (!res.ok) {
-      errors.general = data.error || 'Failed to reset password'
+      // Handle rate limiting specifically
+      if (data.error && data.error.includes('Too many reset attempts')) {
+        errors.general = data.error
+      } else {
+        errors.general = data.error || 'Failed to reset password'
+      }
       return
     }
 

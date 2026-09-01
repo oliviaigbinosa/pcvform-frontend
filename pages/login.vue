@@ -154,13 +154,6 @@ useHead({
 const router = useRouter()
 const route = useRoute()
 
-// XSS Prevention: Sanitize input to prevent script injection
-function sanitizeInput(input) {
-  const div = document.createElement('div')
-  div.textContent = input
-  return div.innerHTML
-}
-
 function isLoginEmail(v) {
   return /^[^\s@]+@getpayedmail\.com$/.test(v)
 }
@@ -170,57 +163,6 @@ const loggingIn = ref(false)
 const loginForm = reactive({ email: '', password: '' })
 const loginErrors = reactive({})
 const showLogoutMessage = ref(route.query.logout === 'true')
-
-// Rate limiting configuration
-const MAX_ATTEMPTS = 5
-const LOCKOUT_DURATION = 15 * 60 * 1000 // 15 minutes in milliseconds
-
-// Rate limiting state
-const failedAttempts = ref(0)
-const lockoutUntil = ref(null)
-const isRateLimited = ref(false)
-
-// Load rate limiting state from localStorage on mount
-function loadRateLimitState() {
-  const storedAttempts = localStorage.getItem('loginFailedAttempts')
-  const storedLockout = localStorage.getItem('loginLockoutUntil')
-  
-  if (storedAttempts) {
-    failedAttempts.value = parseInt(storedAttempts, 10)
-  }
-  if (storedLockout) {
-    const lockoutTime = parseInt(storedLockout, 10)
-    if (Date.now() < lockoutTime) {
-      lockoutUntil.value = lockoutTime
-      isRateLimited.value = true
-    } else {
-      // Lockout period has expired, reset
-      resetRateLimit()
-    }
-  }
-}
-
-// Save rate limiting state to localStorage
-function saveRateLimitState() {
-  localStorage.setItem('loginFailedAttempts', failedAttempts.value.toString())
-  if (lockoutUntil.value) {
-    localStorage.setItem('loginLockoutUntil', lockoutUntil.value.toString())
-  } else {
-    localStorage.removeItem('loginLockoutUntil')
-  }
-}
-
-// Reset rate limiting state
-function resetRateLimit() {
-  failedAttempts.value = 0
-  lockoutUntil.value = null
-  isRateLimited.value = false
-  localStorage.removeItem('loginFailedAttempts')
-  localStorage.removeItem('loginLockoutUntil')
-}
-
-// Initialize rate limiting state
-loadRateLimitState()
 
 // Clear the logout query parameter after showing the message once
 if (showLogoutMessage.value) {
@@ -232,21 +174,10 @@ async function handleLogin() {
   delete loginErrors.password
   delete loginErrors.general
 
-  // Check if rate limited
-  if (isRateLimited.value) {
-    const remainingTime = Math.ceil((lockoutUntil.value - Date.now()) / 60000)
-    loginErrors.general = `Too many login attempts. Try again in ${remainingTime} minutes.`
-    return
-  }
-
-  // Sanitize inputs to prevent XSS
-  const sanitizedEmail = sanitizeInput(loginForm.email)
-  const sanitizedPassword = sanitizeInput(loginForm.password)
-
-  if (!isLoginEmail(sanitizedEmail)) {
+  if (!isLoginEmail(loginForm.email)) {
     loginErrors.email = 'Email must end with @getpayedmail.com'
   }
-  if (!sanitizedPassword) {
+  if (!loginForm.password) {
     loginErrors.password = 'Password is required'
   }
 
@@ -258,37 +189,26 @@ async function handleLogin() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: sanitizedEmail,
-        password: sanitizedPassword,
+        email: loginForm.email,
+        password: loginForm.password,
       }),
     })
 
     const data = await res.json()
     if (!res.ok) {
-      // Only increment failed attempts for authentication errors (wrong email/password)
-      // Network errors and other issues don't count
-      if (res.status === 401 || (data.error && data.error.includes('Invalid'))) {
-        failedAttempts.value += 1
-        saveRateLimitState()
-        
-        // Check if max attempts reached
-        if (failedAttempts.value >= MAX_ATTEMPTS) {
-          lockoutUntil.value = Date.now() + LOCKOUT_DURATION
-          isRateLimited.value = true
-          saveRateLimitState()
-          loginErrors.general = 'Too many login attempts. Try again in 15 minutes.'
-        } else {
-          loginErrors.general = data.error || 'Login failed'
-        }
+      // Handle rate limiting specifically
+      if (data.error && data.error.includes('Too many login attempts')) {
+        loginErrors.general = data.error
       } else {
-        // Other errors (network, server issues) don't count toward rate limiting
         loginErrors.general = data.error || 'Login failed'
       }
       return
     }
 
-    // Successful login - reset rate limiting
-    resetRateLimit()
+    // Store JWT token
+    if (data.token) {
+      sessionStorage.setItem('pcv_token', data.token)
+    }
 
     loginUser(data.email, data.role, data.department || '', data.createdBy || '')
     
@@ -307,7 +227,6 @@ async function handleLogin() {
     
     router.replace(data.role === 'admin' || data.role === 'super admin' ? { name: 'admin' } : { name: 'form' })
   } catch {
-    // Network errors don't count toward rate limiting
     loginErrors.general = 'Could not reach the server. Make sure the backend is running.'
   } finally {
     loggingIn.value = false
