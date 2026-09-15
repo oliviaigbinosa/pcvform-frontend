@@ -5,7 +5,7 @@
 
       <div class="page-header__left">
 
-        <div v-if="activeTab !== 'requests'" class="header-icon">
+        <div class="header-icon">
           <svg
               width="20"
               height="20"
@@ -21,7 +21,7 @@
         </div>
 
         <div class="header-text">
-          <p v-if="activeTab !== 'requests'" class="company-label">
+          <p class="company-label">
             Getpayed Technology Solutions Ltd.
           </p>
 
@@ -1132,7 +1132,7 @@ async function submitLeave() {
 
 .page-header {
   width: 100%;
-  max-width: 750px;
+  max-width: 800px;
   margin: 16px auto 40px;
 }
 
@@ -1177,7 +1177,7 @@ async function submitLeave() {
 
 .card {
   width: 100%;
-  max-width: 750px;
+  max-width: 800px;
   margin: 0 auto;
   background: #fff;
   border-radius: 22px;
@@ -1447,7 +1447,7 @@ async function submitLeave() {
   margin-left: auto;
   margin-right: auto;
   overflow-y: hidden;
-  border-radius: 0;
+  border-radius: 22px;
 }
 
 .content .vouchers-empty {
@@ -1456,7 +1456,7 @@ async function submitLeave() {
   margin-bottom: 0;
   margin-left: auto;
   margin-right: auto;
-  border-radius: 0;
+  border-radius: 22px;
 }
 
 .content .vouchers-table th,
