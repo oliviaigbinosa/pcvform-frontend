@@ -30,12 +30,16 @@
   --font-mono: 'DM Mono', monospace;
 }
 
+html {
+  font-size: 16px;
+}
 /* ── Base ───────────────────────────────────────────────────── */
 body {
   font-family: var(--font-body);
   background: var(--bg);
   color: var(--fg);
   min-height: 100vh;
+  font-size: 1rem;
 }
 
 /* ── App wrapper ────────────────────────────────────────────── */
@@ -2158,10 +2162,17 @@ router-link {
   /* ── Login page ──────────────────────────────────────────── */
   .login-wrap {
     padding: 16px 12px;
+    background: var(--card);
+    flex-direction: column;
   }
 
   .login-card {
     padding: 28px 20px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    max-width: 100%;
+    box-shadow: none;
   }
 
   .login-card__title {
@@ -2170,6 +2181,11 @@ router-link {
 
   .login-form {
     gap: 14px;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  .login-form input {
+    font-size: 16px;
   }
 
   /* ── Page wrapper ────────────────────────────────────────── */
@@ -2479,6 +2495,10 @@ router-link {
 
   .login-form {
     gap: 12px;
+  }
+
+  .login-form input {
+    font-size: 16px;
   }
 
   /* ── Page wrapper ────────────────────────────────────────── */

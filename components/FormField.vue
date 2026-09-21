@@ -109,3 +109,89 @@ function handleChange(e) {
 
 </script>
 
+<style scoped>
+/* Date input wrapper for placeholder */
+.date-input-wrapper {
+  position: relative;
+}
+
+.date-placeholder {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-fg);
+  pointer-events: none;
+  font-size: 14px;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+/* Hide placeholder when input has value */
+.date-input-wrapper input:not(:placeholder-shown) + .date-placeholder {
+  display: none;
+}
+
+/* Date input specific fixes */
+.field input[type="date"] {
+  /* Fix for iOS date input display */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+/* Additional iOS date input fixes */
+.field input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.field input[type="date"]::-webkit-calendar-picker-indicator {
+  padding: 0;
+  margin: 0;
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Firefox date input fixes */
+.field input[type="date"]::-moz-calendar-picker-indicator {
+  padding: 0;
+  margin: 0;
+  opacity: 1;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .field input,
+  .field textarea,
+  .field select {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+}
+
+@media (max-width: 480px) {
+  .field input,
+  .field textarea,
+  .field select {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+
+  /* Ensure date placeholder is visible on mobile */
+  .date-placeholder {
+    font-size: 14px;
+    left: 10px;
+  }
+
+  /* Hide default date placeholder on mobile */
+  .field input[type="date"]::-webkit-datetime-edit {
+    color: transparent;
+  }
+
+  .field input[type="date"]:not(:placeholder-shown)::-webkit-datetime-edit {
+    color: var(--fg);
+  }
+
+}
+</style>
+
+
+
