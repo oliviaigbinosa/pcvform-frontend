@@ -92,8 +92,11 @@ async function handleSubmit() {
       return
     }
 
-    message.value = 'A reset link has been sent to your email. Please check your inbox.'
-    email.value = ''
+    // Only show success message if email was actually sent
+    if (data.ok) {
+      message.value = 'A reset link has been sent to your email. Please check your inbox.'
+      email.value = ''
+    }
   } catch {
     error.value = 'Could not reach the server. Make sure the backend is running.'
   } finally {
@@ -196,24 +199,24 @@ async function handleSubmit() {
 
 @media (max-width: 480px) {
   .forgot-card {
-    padding: 24px 16px;
-    min-height: auto;
+    padding: 12px 8px;
+    transform: scale(0.9);
+    transform-origin: center center;
   }
 
   .forgot-title {
-    font-size: 20px;
-    transform: none;
-    margin-top: 0;
+    font-size: 18px;
+    margin-bottom: 4px;
   }
 
   .forgot-label {
-    margin: 32px 0 4px;
-    transform: none;
+    font-size: 13px;
+    margin: 12px 0 3px;
   }
 
   .email-field input {
-    padding: 10px 12px 10px 38px;
-    font-size: 13px;
+    padding: 6px 10px 6px 32px;
+    font-size: 16px; /* Prevent iOS zoom on focus */
   }
 
   .email-icon {
@@ -221,8 +224,61 @@ async function handleSubmit() {
   }
 
   .email-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .login-submit {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .forgot-link {
+    font-size: 11px;
+  }
+
+  
+  @media (max-width: 768px) {
+  /* Make content smaller and more compact on small screens */
+  .forgot-card {
+    padding: 16px 12px;
+    transform: scale(0.95);
+    transform-origin: center center;
+  }
+
+  .forgot-title {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+
+  .forgot-label {
+    font-size: 14px;
+    margin: 16px 0 4px;
+  }
+
+  .email-field input {
+    padding: 8px 12px 8px 36px;
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+
+  .email-icon {
+    left: 12px;
+  }
+
+  .email-icon svg {
     width: 16px;
     height: 16px;
   }
+
+  .login-submit {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .forgot-link {
+    font-size: 12px;
+  }
+}
+
 }
 </style>

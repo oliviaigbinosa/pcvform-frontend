@@ -326,6 +326,8 @@
       </button>
       </div>
 
+    <p v-if="previewError" class="err-msg" style="margin-top: 12px; padding: 0 24px 24px;">{{ previewError }}</p>
+
     </div>
   </div>
  
@@ -629,12 +631,14 @@ import {
   fetchLeaveRequests,
   fetchOnboardingUsers,
   addLeaveRequest,
+  sendLeaveRequestEmail,
   updateLeaveRequestStatus,
   onboardDepts,
   allLeaveRequests,
   loadingLeaveRequests,
   onboardingUsers,
   API_BASE,
+  getAuthToken,
 } from '~/composables/appState'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 
@@ -646,6 +650,7 @@ const submitting = ref(false)
 const validating = ref(false)
 const submitted = ref(false)
 const submittedEmployee = ref('')
+const previewError = ref('')
 const isSuperAdmin = computed(() => userRole.value === 'super admin')
 const isFinanceManager = computed(() => String(userEmail.value || '').toLowerCase() === FINANCE_MANAGER_EMAIL)
 const isHr = computed(() => String(userEmail.value || '').toLowerCase() === 'chinenye.onyia@getpayedmail.com')
@@ -862,6 +867,7 @@ async function validateManagerEmail(manager) {
       `${API_BASE}/api/admin/validate-manager-email?email=${encodeURIComponent(managerEmail)}`,
       {
         headers: {
+          'Authorization': `Bearer ${getAuthToken()}`,
           'x-admin-email': userEmail.value,
           'x-user-email': userEmail.value,
         },
@@ -1104,8 +1110,24 @@ function viewRequests() {
 async function submitLeave() {
   if (submitting.value) return
   submitting.value = true
+  previewError.value = ''
   try {
     if (!(await validate())) return
+
+    // First, send the leave request email
+    try {
+      await sendLeaveRequestEmail({
+        ...form,
+        attachments: attachments.value,
+        submittedBy: userEmail.value,
+      })
+    } catch (emailErr) {
+      previewError.value = 'Failed to send leave request email. SMTP not set'
+      console.error(emailErr)
+      return
+    }
+
+    // Only save to database if email was sent successfully
     await addLeaveRequest({
       ...form,
       attachments: attachments.value,
@@ -1116,7 +1138,7 @@ async function submitLeave() {
     submitted.value = true
   } catch (err) {
     console.error(err)
-    alert(err.message || 'Failed to submit leave request')
+    previewError.value = err.message || 'Failed to submit leave request'
   } finally {
     submitting.value = false
   }
@@ -1305,6 +1327,35 @@ async function submitLeave() {
   .modal-body {
     padding: 16px;
   }
+
+  .dashboard-tabs {
+    transform: translateY(-8px);
+  }
+
+  .dashboard-tabs .dashboard-tabs__tab {
+    font-size: 14px;
+    padding: 12px 16px;
+  }
+
+  /* Ensure date fields are full width on mobile */
+  .form-grid > .field.full-width {
+    grid-column: 1 / -1;
+  }
+
+  /* Ensure date fields fit properly on mobile */
+  .form-grid input[type="date"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+
+  /* Ensure field containers respect constraints on mobile */
+  .form-grid .field {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .modal {
@@ -1374,7 +1425,7 @@ async function submitLeave() {
 
 .preview-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 20px;
   padding: 4px 0;
   font-size: 14px;
@@ -1459,6 +1510,22 @@ async function submitLeave() {
   border-radius: 0;
 }
 
+@media (max-width: 768px) {
+  .content .vouchers-empty {
+    max-width: 1000%;
+    padding: 40px 24px;
+    margin: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content .vouchers-empty {
+    max-width: 100%;
+    padding: 32px 20px;
+    margin: 0 12px;
+  }
+}
+
 .content .vouchers-table th,
 .content .vouchers-table td {
   border-right: 1px solid var(--border);
@@ -1510,6 +1577,7 @@ async function submitLeave() {
   gap: 12px;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
+  min-width: 0;
 }
 
 .filter-input {
@@ -1539,9 +1607,20 @@ async function submitLeave() {
   transform: translateY(-14px);
 }
 .admin-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
   padding: 18px 20px;
   margin: 0 auto 16px;
   max-width: 1040px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .admin-filters {
+    max-width: 100%;
+    margin: 0 auto 16px;
+  }
 }
 
 .status-wrap {
@@ -1582,6 +1661,7 @@ async function submitLeave() {
   border-bottom: none;
   padding: 0;
   flex: 1 1 100%;
+  min-width: 0;
 }
 
 .leave-badge {
@@ -1641,28 +1721,129 @@ async function submitLeave() {
     gap: 4px;
   }
 
-  .admin-filter-field {
-    min-width: 140px;
+  .dashboard-tabs {
+    transform: translateY(-4px);
+  }
+
+  .dashboard-tabs .dashboard-tabs__tab {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .page-header {
+    margin: 4px auto 16px;
+  }
+
+  .admin-filters {
+    padding: 12px;
   }
 }
 
 .admin-filter-field {
-  flex: 1 1 0;
-  min-width: 180px;
+  flex: 1;
+  min-width: 160px;
 }
 
 .filter-row .admin-filter-clear {
-  height: 34px;
-  padding: 0 16px;
-  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 10px 16px;
   font-size: 13px;
-  transform: translateY(-4px);
+  align-self: flex-end;
+  white-space: nowrap;
+  min-width: fit-content;
+  height: 34px;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
   .admin-filter-field {
-    min-width: 140px;
-    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .filter-row {
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-row .admin-filter-clear {
+    align-self: stretch;
+    text-align: center;
+    white-space: nowrap;
+    min-width: fit-content;
+    height: 34px;
+    padding: 0 16px;
+    font-size: 13px;
+    transform: translateY(-2px);
+  }
+
+  .admin-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .content .vouchers-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content .vouchers-table {
+    min-width: 700px;
+  }
+
+  .dashboard-tabs {
+    max-width: 100%;
+  }
+
+  .admin-filters {
+    max-width: 100%;
+  }
+
+  /* Ensure form fields fit on medium screens */
+  .form-grid {
+    gap: 20px;
+  }
+
+  .form-grid input[type="date"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-grid .field {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .content .vouchers-table {
+    min-width: 550px;
+  }
+
+  .dashboard-tabs .dashboard-tabs__tab {
+    font-size: 13px;
+    padding: 11px 14px;
+  }
+
+  /* Ensure date inputs are responsive on small screens */
+  .form-grid input[type="date"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+  }
+
+  .form-grid .field {
+    min-width: 0;
+    width: 100%;
   }
 }
 </style>

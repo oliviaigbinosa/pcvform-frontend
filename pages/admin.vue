@@ -574,7 +574,6 @@
             </div>
               <span v-if="onboardErrors.role" class="err-msg err-msg--absolute">{{ onboardErrors.role }}</span>
           </div>
-          <span v-if="onboardErrors.general" class="err-msg">{{ onboardErrors.general }}</span>
           <button type="submit" class="btn btn-primary onboarding-submit" :disabled="addingUser">
             {{ addingUser ? 'Adding…' : 'Add User' }}
             <svg
@@ -592,6 +591,7 @@
             </svg>
           </button>
         </form>
+        <span v-if="onboardErrors.general" class="err-msg onboarding-general-error">{{ onboardErrors.general }}</span>
       </div>
 
       <nav v-if="canViewTabs" class="dashboard-tabs onboarding-list-tabs" role="tablist" aria-label="Onboarded users">
@@ -837,6 +837,7 @@ import { reactive, computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import FilePreview from '../components/FilePreview.vue'
 import VoucherTableSkeleton from '../components/VoucherTableSkeleton.vue'
 import {
+  isAdmin,
   allVouchers,
   loadingVouchers,
   onboardingUsers,
@@ -1290,10 +1291,19 @@ async function handleAddUser() {
   addingUser.value = true
   let newUser = null
   try {
+    // First, send the invite email
+    try {
+      await sendInviteEmail(onboardForm.email, password, userEmail.value)
+    } catch (emailErr) {
+      onboardErrors.general = 'Failed to send invite email. SMTP not set'
+      console.error(emailErr)
+      return
+    }
+
+    // Only save to database if email was sent successfully
     // For Finance department, pass empty role and let backend auto-assign
     const roleToSubmit = onboardForm.department.toLowerCase() === 'finance' ? '' : onboardForm.role
     newUser = await addOnboardingUser(onboardForm.email, password, userEmail.value, onboardForm.department, roleToSubmit)
-    await sendInviteEmail(onboardForm.email, password, userEmail.value)
     onboardForm.email = ''
     if (hasFullVisibility.value) {
       onboardForm.department = ''
@@ -1406,6 +1416,12 @@ async function handleRemoveUser(id) {
 
 .onboarding-submit {
   transform: translateY(-18px);
+}
+
+.onboarding-general-error {
+  margin-top: 8px;
+  white-space: nowrap;
+  margin-left: 760px;
 }
 
 .onboarding-field input[type="email"] {
@@ -1582,6 +1598,10 @@ async function handleRemoveUser(id) {
     align-items: stretch;
     gap: 8px;
   }
+  .onboarding-field input[type="email"],
+  .onboarding-field input[type="text"] {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1598,7 +1618,7 @@ async function handleRemoveUser(id) {
     -webkit-line-clamp: 1;
     line-clamp: 1;
   }
-}
+
 
 .err-msg--absolute {
   position: absolute;
@@ -1613,5 +1633,10 @@ async function handleRemoveUser(id) {
   border-top: 1px solid var(--border);
   color: var(--muted-fg);
   font-size: 12px;
+}
+.onboarding-field input[type="email"],
+  .onboarding-field input[type="text"] {
+    font-size: 16px;
+  }
 }
 </style>

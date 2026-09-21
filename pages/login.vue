@@ -127,16 +127,105 @@
   .logout-success-text {
     font-size: 13px;
   }
+
+  /* Make content smaller and more compact on small screens */
+  .login-card {
+    padding: 16px 12px;
+    transform: scale(0.95);
+    transform-origin: center center;
+  }
+
+  .login-card__logo {
+    margin-bottom: 6px;
+  }
+
+  .login-card__company {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .login-card__title {
+    font-size: 20px;
+    margin-bottom: 2px;
+  }
+
+  .login-card__sub {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .login-form {
+    gap: 12px;
+  }
+
+  .forgot-link {
+    font-size: 12px;
+    margin: -4px 0 4px;
+  }
+
+  .login-submit {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
 }
 
 @media (max-width: 480px) {
   .logout-success-block {
     padding: 8px 12px;
+    border-radius: 8px;
   }
 
   .logout-success-text {
     font-size: 12px;
     white-space: normal;
+  }
+
+  /* Make content even smaller on mobile screens */
+  .login-card {
+    padding: 12px 8px;
+    transform: scale(0.9);
+    transform-origin: center center;
+  }
+
+  .login-card__logo {
+    margin-bottom: 4px;
+  }
+
+  .login-card__company {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .login-card__title {
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+
+  .login-card__sub {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .login-form {
+    gap: 10px;
+  }
+
+  .forgot-link {
+    font-size: 11px;
+    margin: -3px 0 3px;
+  }
+
+  .login-submit {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+  
+
+@media (max-width: 768px) {
+  .logout-success-block {
+    border-radius: 8px;
   }
 }
 </style>

@@ -303,6 +303,72 @@
   </div>
 </template>
 
+<style scoped>
+/* Ensure date inputs fit within their containers */
+.step-card input[type="date"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  /* Fix for iOS date input display */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  /* Ensure consistent padding across browsers */
+  padding: 10px 12px;
+}
+
+/* Additional iOS date input fixes */
+.step-card input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.step-card input[type="date"]::-webkit-calendar-picker-indicator {
+  padding: 0;
+  margin: 0;
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Firefox date input fixes */
+.step-card input[type="date"]::-moz-calendar-picker-indicator {
+  padding: 0;
+  margin: 0;
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Ensure field containers respect constraints */
+.step-card .field {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Ensure From email readonly field shows full text on small screens by reducing font size */
+.step-card .field .full-text-field {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .step-card .field .full-text-field {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .step-card .field input[readonly].full-text-field {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .step-card .field input.full-text-field {
+    overflow-x: auto;
+  }
+}
+</style>
+
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
@@ -310,7 +376,7 @@ import FormField from '../components/FormField.vue'
 import FileUpload from '../components/FileUpload.vue'
 import FormPreview from '../components/formpreview.vue'
 import FilePreview from '../components/FilePreview.vue'
-import { addVoucher, userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers, API_BASE, fetchNextSerial } from '~/composables/appState'
+import { userEmail, userDepartment, userCreatedBy, userRole, fetchCurrentUser, isAdmin, onboardingUsers, fetchOnboardingUsers, allVouchers, loadingVouchers, API_BASE, fetchNextSerial } from '~/composables/appState'
 
 const FINANCE_EMAIL = 'finance@getpayedmail.com'
 const FINANCE_MANAGER_EMAIL = 'gbemisola.olajide@getpayedmail.com'
@@ -645,29 +711,6 @@ async function submitVoucher() {
   sendingVoucher.value = true
   voucherError.value = ''
   try {
-    const entry = {
-      id: voucherNo.value,
-      submittedBy: userEmail.value,
-      submissionDate: form.submissionDate,
-      payee: form.payee,
-      department: form.department,
-      amount: parsedAmount.value,
-      amountWords: form.amountWords,
-      purpose: form.purpose,
-      from: form.from,
-      to: form.to,
-      cc: form.cc,
-      subject: form.subject,
-      supportingDocs: form.supportingDocs.map((f) => ({
-        name: f.name,
-        type: f.type,
-        size: f.size,
-        data: f.data,
-      })),
-    }
-
-    await addVoucher(entry)
-
     const payload = {
       voucherNo: voucherNo.value,
       from: form.from,
@@ -680,7 +723,12 @@ async function submitVoucher() {
       amountWords: form.amountWords || '',
       purpose: form.purpose || '',
       submissionDate: form.submissionDate || '',
-      supportingDocs: form.supportingDocs || [],
+      supportingDocs: form.supportingDocs.map((f) => ({
+        name: f.name,
+        type: f.type,
+        size: f.size,
+        data: f.data,
+      })),
       submittedBy: userEmail.value || form.from,
     }
 
@@ -692,7 +740,12 @@ async function submitVoucher() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      throw new Error(data.error || 'Failed to send voucher email')
+      throw new Error(data.error || 'Failed to send voucher email. SMTP not set')
+    }
+
+    const responseData = await res.json()
+    if (responseData.voucher) {
+      allVouchers.value = [responseData.voucher, ...allVouchers.value]
     }
 
     lastVoucherNo.value = voucherNo.value

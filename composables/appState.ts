@@ -1,6 +1,17 @@
 import { computed, ref } from 'vue'
 
-const API_BASE = process.client ? import.meta.env.VITE_API_BASE_URL || '' : ''
+let API_BASE = ''
+if (process.client) {
+  // Prefer explicit VITE var, otherwise if running on localhost force local backend for dev
+  API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+  try {
+    if (!API_BASE && window && window.location && window.location.hostname === 'localhost') {
+      API_BASE = 'http://localhost:3001'
+    }
+  } catch (e) {
+    // ignore
+  }
+}
 
 const userEmail = ref('')
 const userRole = ref('')
@@ -242,6 +253,18 @@ async function sendInviteEmail(email: string, password: string, from?: string) {
   }
 }
 
+async function sendLeaveRequestEmail(leaveRequest: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/api/email/send-leave-request`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(leaveRequest),
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to send leave request')
+  }
+}
+
 async function fetchCurrentUser() {
   const res = await fetch(`${API_BASE}/api/auth/me`, {
     headers: getAuthHeaders(),
@@ -291,6 +314,7 @@ export {
   onboardingUsers,
   removeOnboardingUser,
   sendInviteEmail,
+  sendLeaveRequestEmail,
   updateVoucherStatus,
   updateLeaveRequestStatus,
   fetchCurrentUser,
